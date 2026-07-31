@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from models import Barbero, Cliente, SessionLocal
-from schemas import BarberoCreate, BarberoResponse, ClienteCreate, ClienteResponse
+from schemas import BarberoCreate, BarberoResponse, ClienteCreate, ClienteResponse, CitaCreate, CitaResponse
 
 app = FastAPI()
 
@@ -90,3 +90,58 @@ def eliminar_cliente(cliente_id: int, db=Depends(get_db)):
     db.delete(cliente)
     db.commit()
     return {"mensaje": "Cliente eliminado correctamente"}
+
+@app.post("/citas", response_model=CitaResponse)
+def crear_cita(cita: CitaCreate, db=Depends(get_db)):
+    cliente = db.query(Cliente).filter(Cliente.id == cita.cliente_id).first()
+    if not cliente:
+        raise HTTPException(status_code=404, detail="El cliente especificado no existe")
+    barbero = db.query(Barbero).filter(Barbero.id == cita.barbero_id).first()
+    if not barbero:
+        raise HTTPException(status_code=404, detail="El barbero especificado no existe")
+    servicio = db.query(Servicio).filter(Servicio.id == cita.servicio_id).first()
+    if not servicio:
+        raise HTTPException(status_code=404, detail="El servicio especificado no existe")
+    nuevo_cita = Cita(
+        cliente_id=cita.cliente_id,
+        barbero_id=cita.barbero_id,
+        servicio_id=cita.servicio_id,
+        fecha_hora=datetime.fromisoformat(cita.fecha_hora)
+    )
+    db.add(nuevo_cita)
+    db.commit()
+    db.refresh(nuevo_cita)  # Refresh to get the generated ID
+    return nuevo_cita
+
+@app.get("/citas", response_model=list[CitaResponse])
+def obtener_citas(db=Depends(get_db)):
+    citas = db.query(Cita).all()
+    return citas
+
+@app.get("/citas/{cita_id}", response_model=CitaResponse)
+def obtener_cita(cita_id: int, db=Depends(get_db)):
+    cita = db.query(Cita).filter(Cita.id == cita_id).first()
+    if cita is None:
+        raise HTTPException(status_code=404, detail="Cita no encontrada")
+    return cita
+
+@app.put("/citas/{cita_id}", response_model=CitaResponse)
+def actualizar_cita(cita_id: int, cita_actualizada: CitaCreate, db=Depends(get_db)):
+    cita = db.query(Cita).filter(Cita.id == cita_id).first()
+    if cita is None:
+        raise HTTPException(status_code=404, detail="Cita no encontrada")
+    cita.cliente_id = cita_actualizada.cliente_id
+    cita.barbero_id = cita_actualizada.barbero_id
+    cita.servicio_id = cita_actualizada.servicio_id
+    cita.fecha_hora = datetime.fromisoformat(cita_actualizada.fecha_hora)
+    db.commit()
+    return cita
+
+@app.delete("/citas/{cita_id}")
+def eliminar_cita(cita_id: int, db=Depends(get_db)):
+    cita = db.query(Cita).filter(Cita.id == cita_id).first()
+    if cita is None:
+        raise HTTPException(status_code=404, detail="Cita no encontrada")
+    db.delete(cita)
+    db.commit()
+    return {"mensaje": "Cita eliminada correctamente"}
