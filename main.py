@@ -1,9 +1,30 @@
 from fastapi import FastAPI, Depends, HTTPException
-from models import Barbero, Cliente, SessionLocal
-from schemas import BarberoCreate, BarberoResponse, ClienteCreate, ClienteResponse, CitaCreate, CitaResponse
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+from datetime import datetime
 
-app = FastAPI()
+# 1. Importamos los modelos de la base de datos
+from models import Base, Barbero, Cliente, Servicio, Cita
+from schemas import (
+    BarberoCreate, BarberoResponse,
+    ClienteCreate, ClienteResponse,
+    ServicioCreate, ServicioResponse,
+    CitaCreate, CitaResponse
+)
 
+# =========================================================
+#      CONFIGURACIÓN DE BASE DE DATOS SQLITE EN MAIN
+# =========================================================
+SQLALCHEMY_DATABASE_URL = "sqlite:///./barberflow.db"
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Creamos las tablas automáticamente en el archivo .db
+Base.metadata.create_all(bind=engine)
+
+# Dependencia para gestionar las sesiones de base de datos
 def get_db():
     db = SessionLocal()
     try:
@@ -11,137 +32,239 @@ def get_db():
     finally:
         db.close()
 
-@app.get("/")
-def bienvenida():
-    return {"mensaje": "Bienvenido a la API de BarberFlow"}
 
-@app.post("/barberos")
-def crear_barbero(barbero: BarberoCreate, db= Depends(get_db)):
+app = FastAPI(title="BarberFlow API")
+
+
+# =========================================================
+#               CRUD COMPLETO DE BARBEROS (5 Rutas)
+# =========================================================
+
+@app.post("/barberos", response_model=BarberoResponse)
+def crear_barbero(barbero: BarberoCreate, db: Session = Depends(get_db)):
     nuevo_barbero = Barbero(nombre=barbero.nombre)
     db.add(nuevo_barbero)
     db.commit()
-    return dict(mensaje="Barbero creado exitosamente", barbero_id=nuevo_barbero.id)
+    db.refresh(nuevo_barbero)
+    return nuevo_barbero
+
 
 @app.get("/barberos", response_model=list[BarberoResponse])
-def obtener_barberos(db=Depends(get_db)):
-    barberos = db.query(Barbero).all()
-    return barberos
+def obtener_barberos(db: Session = Depends(get_db)):
+    return db.query(Barbero).all()
+
 
 @app.get("/barberos/{barbero_id}", response_model=BarberoResponse)
-def obtener_barbero(barbero_id: int, db=Depends(get_db)):
+def obtener_barbero(barbero_id: int, db: Session = Depends(get_db)):
     barbero = db.query(Barbero).filter(Barbero.id == barbero_id).first()
-    if barbero is None:
+    if not barbero:
         raise HTTPException(status_code=404, detail="Barbero no encontrado")
     return barbero
+
 
 @app.put("/barberos/{barbero_id}", response_model=BarberoResponse)
-def actualizar_barbero(barbero_id: int, barbero_actualizado: BarberoCreate, db=Depends(get_db)):
+def actualizar_barbero(barbero_id: int, barbero_actualizado: BarberoCreate, db: Session = Depends(get_db)):
     barbero = db.query(Barbero).filter(Barbero.id == barbero_id).first()
-    if barbero is None:
+    if not barbero:
         raise HTTPException(status_code=404, detail="Barbero no encontrado")
+    
     barbero.nombre = barbero_actualizado.nombre
     db.commit()
+    db.refresh(barbero)
     return barbero
 
+
 @app.delete("/barberos/{barbero_id}")
-def eliminar_barbero(barbero_id: int, db=Depends(get_db)):
+def eliminar_barbero(barbero_id: int, db: Session = Depends(get_db)):
     barbero = db.query(Barbero).filter(Barbero.id == barbero_id).first()
-    if barbero is None:
+    if not barbero:
         raise HTTPException(status_code=404, detail="Barbero no encontrado")
+    
     db.delete(barbero)
     db.commit()
     return {"mensaje": "Barbero eliminado correctamente"}
 
+
+# =========================================================
+#               CRUD COMPLETO DE CLIENTES (5 Rutas)
+# =========================================================
+
 @app.post("/clientes", response_model=ClienteResponse)
-def crear_cliente(cliente: ClienteCreate, db=Depends(get_db)):
+def crear_cliente(cliente: ClienteCreate, db: Session = Depends(get_db)):
     nuevo_cliente = Cliente(nombre=cliente.nombre, telefono=cliente.telefono)
     db.add(nuevo_cliente)
     db.commit()
-    db.refresh(nuevo_cliente)  # Refresh to get the generated ID
+    db.refresh(nuevo_cliente)
     return nuevo_cliente
 
+
 @app.get("/clientes", response_model=list[ClienteResponse])
-def obtener_clientes(db=Depends(get_db)):
-    clientes = db.query(Cliente).all()
-    return clientes
+def obtener_clientes(db: Session = Depends(get_db)):
+    return db.query(Cliente).all()
+
 
 @app.get("/clientes/{cliente_id}", response_model=ClienteResponse)
-def obtener_cliente(cliente_id: int, db=Depends(get_db)):
+def obtener_cliente(cliente_id: int, db: Session = Depends(get_db)):
     cliente = db.query(Cliente).filter(Cliente.id == cliente_id).first()
-    if cliente is None:
+    if not cliente:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
     return cliente
 
+
 @app.put("/clientes/{cliente_id}", response_model=ClienteResponse)
-def actualizar_cliente(cliente_id: int, cliente_actualizado: ClienteCreate, db=Depends(get_db)):
+def actualizar_cliente(cliente_id: int, cliente_actualizado: ClienteCreate, db: Session = Depends(get_db)):
     cliente = db.query(Cliente).filter(Cliente.id == cliente_id).first()
-    if cliente is None:
+    if not cliente:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    
     cliente.nombre = cliente_actualizado.nombre
     cliente.telefono = cliente_actualizado.telefono
     db.commit()
+    db.refresh(cliente)
     return cliente
 
+
 @app.delete("/clientes/{cliente_id}")
-def eliminar_cliente(cliente_id: int, db=Depends(get_db)):
+def eliminar_cliente(cliente_id: int, db: Session = Depends(get_db)):
     cliente = db.query(Cliente).filter(Cliente.id == cliente_id).first()
-    if cliente is None:
+    if not cliente:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    
     db.delete(cliente)
     db.commit()
     return {"mensaje": "Cliente eliminado correctamente"}
 
+
+# =========================================================
+#               CRUD COMPLETO DE SERVICIOS (5 Rutas)
+# =========================================================
+
+@app.post("/servicios", response_model=ServicioResponse)
+def crear_servicio(servicio: ServicioCreate, db: Session = Depends(get_db)):
+    nuevo_servicio = Servicio(
+        nombre=servicio.nombre,
+        duracion_minutos=servicio.duracion_minutos,
+        precio=servicio.precio
+    )
+    db.add(nuevo_servicio)
+    db.commit()
+    db.refresh(nuevo_servicio)
+    return nuevo_servicio
+
+
+@app.get("/servicios", response_model=list[ServicioResponse])
+def obtener_servicios(db: Session = Depends(get_db)):
+    return db.query(Servicio).all()
+
+
+@app.get("/servicios/{servicio_id}", response_model=ServicioResponse)
+def obtener_servicio(servicio_id: int, db: Session = Depends(get_db)):
+    servicio = db.query(Servicio).filter(Servicio.id == servicio_id).first()
+    if not servicio:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    return servicio
+
+
+@app.put("/servicios/{servicio_id}", response_model=ServicioResponse)
+def actualizar_servicio(servicio_id: int, servicio_actualizado: ServicioCreate, db: Session = Depends(get_db)):
+    servicio = db.query(Servicio).filter(Servicio.id == servicio_id).first()
+    if not servicio:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    
+    servicio.nombre = servicio_actualizado.nombre
+    servicio.duracion_minutos = servicio_actualizado.duracion_minutos
+    servicio.precio = servicio_actualizado.precio
+    db.commit()
+    db.refresh(servicio)
+    return servicio
+
+
+@app.delete("/servicios/{servicio_id}")
+def eliminar_servicio(servicio_id: int, db: Session = Depends(get_db)):
+    servicio = db.query(Servicio).filter(Servicio.id == servicio_id).first()
+    if not servicio:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    
+    db.delete(servicio)
+    db.commit()
+    return {"mensaje": "Servicio eliminado correctamente"}
+
+
+# =========================================================
+#                 CRUD COMPLETO DE CITAS (5 Rutas)
+# =========================================================
+
 @app.post("/citas", response_model=CitaResponse)
-def crear_cita(cita: CitaCreate, db=Depends(get_db)):
+def crear_cita(cita: CitaCreate, db: Session = Depends(get_db)):
+    # 1. Validaciones defensivas de integridad relacional
     cliente = db.query(Cliente).filter(Cliente.id == cita.cliente_id).first()
     if not cliente:
         raise HTTPException(status_code=404, detail="El cliente especificado no existe")
+    
     barbero = db.query(Barbero).filter(Barbero.id == cita.barbero_id).first()
     if not barbero:
         raise HTTPException(status_code=404, detail="El barbero especificado no existe")
+    
     servicio = db.query(Servicio).filter(Servicio.id == cita.servicio_id).first()
     if not servicio:
         raise HTTPException(status_code=404, detail="El servicio especificado no existe")
-    nuevo_cita = Cita(
+
+    # 2. Creación limpia de la cita
+    nueva_cita = Cita(
         cliente_id=cita.cliente_id,
         barbero_id=cita.barbero_id,
         servicio_id=cita.servicio_id,
-        fecha_hora=datetime.fromisoformat(cita.fecha_hora)
+        fecha_hora=cita.fecha_hora
     )
-    db.add(nuevo_cita)
+    db.add(nueva_cita)
     db.commit()
-    db.refresh(nuevo_cita)  # Refresh to get the generated ID
-    return nuevo_cita
+    db.refresh(nueva_cita)
+    return nueva_cita
+
 
 @app.get("/citas", response_model=list[CitaResponse])
-def obtener_citas(db=Depends(get_db)):
-    citas = db.query(Cita).all()
-    return citas
+def obtener_citas(db: Session = Depends(get_db)):
+    return db.query(Cita).all()
+
 
 @app.get("/citas/{cita_id}", response_model=CitaResponse)
-def obtener_cita(cita_id: int, db=Depends(get_db)):
+def obtener_cita(cita_id: int, db: Session = Depends(get_db)):
     cita = db.query(Cita).filter(Cita.id == cita_id).first()
-    if cita is None:
+    if not cita:
         raise HTTPException(status_code=404, detail="Cita no encontrada")
     return cita
 
+
 @app.put("/citas/{cita_id}", response_model=CitaResponse)
-def actualizar_cita(cita_id: int, cita_actualizada: CitaCreate, db=Depends(get_db)):
+def actualizar_cita(cita_id: int, cita_actualizada: CitaCreate, db: Session = Depends(get_db)):
     cita = db.query(Cita).filter(Cita.id == cita_id).first()
-    if cita is None:
+    if not cita:
         raise HTTPException(status_code=404, detail="Cita no encontrada")
+    
+    # Validamos que los nuevos IDs existan en la base de datos
+    if not db.query(Cliente).filter(Cliente.id == cita_actualizada.cliente_id).first():
+        raise HTTPException(status_code=404, detail="El cliente especificado no existe")
+    if not db.query(Barbero).filter(Barbero.id == cita_actualizada.barbero_id).first():
+        raise HTTPException(status_code=404, detail="El barbero especificado no existe")
+    if not db.query(Servicio).filter(Servicio.id == cita_actualizada.servicio_id).first():
+        raise HTTPException(status_code=404, detail="El servicio especificado no existe")
+
     cita.cliente_id = cita_actualizada.cliente_id
     cita.barbero_id = cita_actualizada.barbero_id
     cita.servicio_id = cita_actualizada.servicio_id
-    cita.fecha_hora = datetime.fromisoformat(cita_actualizada.fecha_hora)
+    cita.fecha_hora = cita_actualizada.fecha_hora
+    
     db.commit()
+    db.refresh(cita)
     return cita
 
+
 @app.delete("/citas/{cita_id}")
-def eliminar_cita(cita_id: int, db=Depends(get_db)):
+def eliminar_cita(cita_id: int, db: Session = Depends(get_db)):
     cita = db.query(Cita).filter(Cita.id == cita_id).first()
-    if cita is None:
+    if not cita:
         raise HTTPException(status_code=404, detail="Cita no encontrada")
+    
     db.delete(cita)
     db.commit()
     return {"mensaje": "Cita eliminada correctamente"}
