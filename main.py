@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # 1. Importamos los modelos de la base de datos
 from models import Base, Barbero, Cliente, Servicio, Cita
@@ -208,13 +208,29 @@ def crear_cita(cita: CitaCreate, db: Session = Depends(get_db)):
     servicio = db.query(Servicio).filter(Servicio.id == cita.servicio_id).first()
     if not servicio:
         raise HTTPException(status_code=404, detail="El servicio especificado no existe")
+        
+    # Calculamos cuándo terminará este nuevo servicio
+    hora_fin = cita.fecha_hora + timedelta(minutes=servicio.duracion_minutos)
 
-    # 2. Creación limpia de la cita
+    # 2. Lógica anti-solapes (Validación de horarios del barbero)
+    citas_barbero = db.query(Cita).filter(Cita.barbero_id == cita.barbero_id).all()
+    
+    for cita_existente in citas_barbero:
+        servicio_existente = db.query(Servicio).filter(Servicio.id == cita_existente.servicio_id).first()
+        hora_fin_existente = cita_existente.fecha_hora + timedelta(minutes=servicio_existente.duracion_minutos)
+
+        if cita.fecha_hora < hora_fin_existente and hora_fin > cita_existente.fecha_hora:
+            raise HTTPException(
+                status_code=400, 
+                detail="El barbero ya tiene una cita ocupada en ese horario"
+            )
+
+    # 3. Creación limpia de la cita si pasa todos los filtros
     nueva_cita = Cita(
         cliente_id=cita.cliente_id,
         barbero_id=cita.barbero_id,
         servicio_id=cita.servicio_id,
-        fecha_hora=cita.fecha_hora
+        fecha_hora=cita.fecha_hora,
     )
     db.add(nueva_cita)
     db.commit()
