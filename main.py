@@ -196,6 +196,13 @@ def eliminar_servicio(servicio_id: int, db: Session = Depends(get_db)):
 
 @app.post("/citas", response_model=CitaResponse)
 def crear_cita(cita: CitaCreate, db: Session = Depends(get_db)):
+    # 0. Control de horario comercial
+    if cita.fecha_hora.hour < 9 or cita.fecha_hora.hour >= 20:
+        raise HTTPException(
+            status_code=400,
+            detail="Esa hora no es válida. La barbería abre de 09:00 a 20:00."
+        )
+
     # 1. Validaciones defensivas de integridad relacional
     cliente = db.query(Cliente).filter(Cliente.id == cita.cliente_id).first()
     if not cliente:
