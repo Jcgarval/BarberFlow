@@ -239,8 +239,13 @@ def crear_cita(cita: CitaCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/citas", response_model=list[CitaResponse])
-def obtener_citas(db: Session = Depends(get_db)):
-    return db.query(Cita).all()
+def obtener_citas(barbero_id: int = None, cliente_id: int = None, db: Session = Depends(get_db)):
+    query = db.query(Cita)
+    if barbero_id is not None:
+        query = query.filter(Cita.barbero_id == barbero_id)
+    if cliente_id is not None:
+        query = query.filter(Cita.cliente_id == cliente_id)
+    return query.all()
 
 
 @app.get("/citas/{cita_id}", response_model=CitaResponse)
