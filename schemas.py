@@ -58,12 +58,21 @@ class CitaCreate(BaseModel):
     servicio_id: int
     fecha_hora: datetime  # Pydantic convertirá el string ISO a datetime automáticamente
 
+class BarberoInfo(BaseModel):
+    nombre: str
+
+class ServicioInfo(BaseModel):
+    nombre: str
+
 class CitaResponse(BaseModel):
     id: int
     cliente_id: int
     barbero_id: int
     servicio_id: int
     fecha_hora: datetime
+
+    barbero: BarberoInfo
+    servicio: ServicioInfo
 
     class Config:
         from_attributes = True

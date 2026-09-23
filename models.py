@@ -1,5 +1,5 @@
 from sqlalchemy import String, Integer, Float, ForeignKey, create_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker, relationship
 from datetime import datetime
 
 class Base(DeclarativeBase):
@@ -35,6 +35,9 @@ class Cita(Base):
     barbero_id: Mapped[int] = mapped_column(ForeignKey("barberos.id"))
     servicio_id: Mapped[int] = mapped_column(ForeignKey("servicios.id"))
     fecha_hora: Mapped[datetime] = mapped_column()
+
+    barbero: Mapped["Barbero"] = relationship()
+    servicio: Mapped["Servicio"] = relationship()
 
 
 motor = create_engine("sqlite:///barberia.db", echo=True)
