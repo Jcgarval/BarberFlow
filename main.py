@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 
 # Nuevos imports de seguridad
 import bcrypt
-from jose import jwt
+from jose import jwt, JWTError
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 # 1. Importamos los modelos de la base de datos
 from models import Base, Barbero, Cliente, Servicio, Cita
@@ -61,6 +62,34 @@ def get_db():
         db.close()
 
 app = FastAPI(title="BarberFlow API")
+
+# =========================================================
+#       VERIFICADORES DE SEGURIDAD (CANDADOS)
+# =========================================================
+security = HTTPBearer()
+
+def get_usuario_actual(credenciales: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
+    try:
+        # Desencriptamos el token para leer su contenido
+        payload = jwt.decode(credenciales.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=401, detail="Token inválido")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido o caducado")
+    
+    # Buscamos al usuario en la base de datos
+    usuario = db.query(Cliente).filter(Cliente.email == email).first()
+    if not usuario:
+        raise HTTPException(status_code=401, detail="Usuario no encontrado")
+    
+    return usuario
+
+def verificar_admin(usuario: Cliente = Depends(get_usuario_actual)):
+    # Si el usuario no es admin, le bloqueamos el paso con un error 403 (Prohibido)
+    if usuario.rol != "admin":
+        raise HTTPException(status_code=403, detail="No tienes permisos de administrador")
+    return usuario
 
 # =========================================================
 #               SISTEMA DE USUARIOS Y LOGIN
@@ -120,7 +149,7 @@ def login(credenciales: LoginRequest, db: Session = Depends(get_db)):
 # =========================================================
 
 @app.post("/barberos", response_model=BarberoResponse)
-def crear_barbero(barbero: BarberoCreate, db: Session = Depends(get_db)):
+def crear_barbero(barbero: BarberoCreate, db: Session = Depends(get_db), admin: Cliente = Depends(verificar_admin)):
     nuevo_barbero = Barbero(nombre=barbero.nombre)
     db.add(nuevo_barbero)
     db.commit()
@@ -169,7 +198,7 @@ def eliminar_barbero(barbero_id: int, db: Session = Depends(get_db)):
 # =========================================================
 
 @app.post("/servicios", response_model=ServicioResponse)
-def crear_servicio(servicio: ServicioCreate, db: Session = Depends(get_db)):
+def crear_servicio(servicio: ServicioCreate, db: Session = Depends(get_db), admin: Cliente = Depends(verificar_admin)):
     nuevo_servicio = Servicio(
         nombre=servicio.nombre,
         duracion_minutos=servicio.duracion_minutos,
