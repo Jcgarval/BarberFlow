@@ -1,45 +1,53 @@
-from sqlalchemy import String, Integer, Float, ForeignKey, create_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker, relationship
-from datetime import datetime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, DateTime
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
 
-class Base(DeclarativeBase):
-    pass
-
-class Cliente(Base):
-    __tablename__ = "clientes"
-    
-    id: Mapped[int] = mapped_column(primary_key=True)
-    nombre: Mapped[str] = mapped_column(String(50))
-    telefono: Mapped[str] = mapped_column(String(20))
+Base = declarative_base()
 
 class Barbero(Base):
     __tablename__ = "barberos"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    nombre: Mapped[str] = mapped_column(String(50))
-    activo: Mapped[bool] = mapped_column(default=True)
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String, index=True)
+    activo = Column(Boolean, default=True)
+
+    citas = relationship("Cita", back_populates="barbero")
+
+
+class Cliente(Base):
+    __tablename__ = "clientes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String, index=True)
+    telefono = Column(String)
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    rol = Column(String, default="cliente")
+
+    citas = relationship("Cita", back_populates="cliente")
+
 
 class Servicio(Base):
     __tablename__ = "servicios"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    nombre: Mapped[str] = mapped_column(String(50))
-    duracion_minutos: Mapped[int] = mapped_column()
-    precio: Mapped[float] = mapped_column()
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String, index=True)
+    duracion_minutos = Column(Integer)
+    precio = Column(Float)
+
+    citas = relationship("Cita", back_populates="servicio")
+
 
 class Cita(Base):
     __tablename__ = "citas"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    cliente_id: Mapped[int] = mapped_column(ForeignKey("clientes.id"))
-    barbero_id: Mapped[int] = mapped_column(ForeignKey("barberos.id"))
-    servicio_id: Mapped[int] = mapped_column(ForeignKey("servicios.id"))
-    fecha_hora: Mapped[datetime] = mapped_column()
+    id = Column(Integer, primary_key=True, index=True)
+    cliente_id = Column(Integer, ForeignKey("clientes.id"))
+    barbero_id = Column(Integer, ForeignKey("barberos.id"))
+    servicio_id = Column(Integer, ForeignKey("servicios.id"))
+    fecha_hora = Column(DateTime)
 
-    barbero: Mapped["Barbero"] = relationship()
-    servicio: Mapped["Servicio"] = relationship()
-
-
-motor = create_engine("sqlite:///barberia.db", echo=True)
-Base.metadata.create_all(motor)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=motor)
+    # Conexiones de vuelta (relaciones) que faltaban para evitar el error 500
+    cliente = relationship("Cliente", back_populates="citas")
+    barbero = relationship("Barbero", back_populates="citas")
+    servicio = relationship("Servicio", back_populates="citas")

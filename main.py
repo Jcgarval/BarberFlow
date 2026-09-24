@@ -3,17 +3,47 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from datetime import datetime, timedelta
 
+# Nuevos imports de seguridad
+import bcrypt
+from jose import jwt
+
 # 1. Importamos los modelos de la base de datos
 from models import Base, Barbero, Cliente, Servicio, Cita
 from schemas import (
     BarberoCreate, BarberoResponse,
     ClienteCreate, ClienteResponse,
     ServicioCreate, ServicioResponse,
-    CitaCreate, CitaResponse
+    CitaCreate, CitaResponse,
+    LoginRequest
 )
 
 # =========================================================
-#      CONFIGURACIÓN DE BASE DE DATOS SQLITE EN MAIN
+#       CONFIGURACIÓN DE SEGURIDAD Y TOKENS JWT
+# =========================================================
+SECRET_KEY = "tu_clave_secreta_super_segura"
+ALGORITHM = "HS256"
+
+def get_password_hash(password: str) -> str:
+    pwd_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(pwd_bytes, salt)
+    return hashed_password.decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    password_bytes = plain_password.encode('utf-8')
+    hashed_password_bytes = hashed_password.encode('utf-8')
+    return bcrypt.checkpw(password_bytes, hashed_password_bytes)
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(hours=24)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+# =========================================================
+#       CONFIGURACIÓN DE BASE DE DATOS SQLITE EN MAIN
 # =========================================================
 SQLALCHEMY_DATABASE_URL = "sqlite:///./barberflow.db"
 engine = create_engine(
@@ -21,10 +51,8 @@ engine = create_engine(
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Creamos las tablas automáticamente en el archivo .db
 Base.metadata.create_all(bind=engine)
 
-# Dependencia para gestionar las sesiones de base de datos
 def get_db():
     db = SessionLocal()
     try:
@@ -32,8 +60,59 @@ def get_db():
     finally:
         db.close()
 
-
 app = FastAPI(title="BarberFlow API")
+
+# =========================================================
+#               SISTEMA DE USUARIOS Y LOGIN
+# =========================================================
+
+@app.post("/clientes", response_model=ClienteResponse)
+def crear_cliente(cliente: ClienteCreate, db: Session = Depends(get_db)):
+    # 1. Comprobamos si el email ya existe
+    cliente_existente = db.query(Cliente).filter(Cliente.email == cliente.email).first()
+    if cliente_existente:
+        raise HTTPException(status_code=400, detail="El email ya está registrado")
+    
+    # 2. Encriptamos la contraseña
+    hashed_pwd = get_password_hash(cliente.password)
+    
+    # 3. Guardamos el cliente con la contraseña cifrada
+    nuevo_cliente = Cliente(
+        nombre=cliente.nombre, 
+        telefono=cliente.telefono,
+        email=cliente.email,
+        hashed_password=hashed_pwd,
+        rol=cliente.rol
+    )
+    db.add(nuevo_cliente)
+    db.commit()
+    db.refresh(nuevo_cliente)
+    return nuevo_cliente
+
+
+@app.post("/login")
+def login(credenciales: LoginRequest, db: Session = Depends(get_db)):
+    # 1. Buscamos al usuario por su email
+    cliente = db.query(Cliente).filter(Cliente.email == credenciales.email).first()
+    if not cliente:
+        raise HTTPException(status_code=400, detail="Credenciales incorrectas")
+    
+    # 2. Comprobamos que la contraseña coincide con la encriptada
+    if not verify_password(credenciales.password, cliente.hashed_password):
+        raise HTTPException(status_code=400, detail="Credenciales incorrectas")
+        
+    # 3. Generamos el Token JWT con su identidad y su rol
+    access_token = create_access_token(
+        data={"sub": cliente.email, "rol": cliente.rol, "id": cliente.id}
+    )
+    
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer", 
+        "rol": cliente.rol, 
+        "id": cliente.id,
+        "nombre": cliente.nombre
+    }
 
 
 # =========================================================
@@ -83,56 +162,6 @@ def eliminar_barbero(barbero_id: int, db: Session = Depends(get_db)):
     db.delete(barbero)
     db.commit()
     return {"mensaje": "Barbero eliminado correctamente"}
-
-
-# =========================================================
-#               CRUD COMPLETO DE CLIENTES (5 Rutas)
-# =========================================================
-
-@app.post("/clientes", response_model=ClienteResponse)
-def crear_cliente(cliente: ClienteCreate, db: Session = Depends(get_db)):
-    nuevo_cliente = Cliente(nombre=cliente.nombre, telefono=cliente.telefono)
-    db.add(nuevo_cliente)
-    db.commit()
-    db.refresh(nuevo_cliente)
-    return nuevo_cliente
-
-
-@app.get("/clientes", response_model=list[ClienteResponse])
-def obtener_clientes(db: Session = Depends(get_db)):
-    return db.query(Cliente).all()
-
-
-@app.get("/clientes/{cliente_id}", response_model=ClienteResponse)
-def obtener_cliente(cliente_id: int, db: Session = Depends(get_db)):
-    cliente = db.query(Cliente).filter(Cliente.id == cliente_id).first()
-    if not cliente:
-        raise HTTPException(status_code=404, detail="Cliente no encontrado")
-    return cliente
-
-
-@app.put("/clientes/{cliente_id}", response_model=ClienteResponse)
-def actualizar_cliente(cliente_id: int, cliente_actualizado: ClienteCreate, db: Session = Depends(get_db)):
-    cliente = db.query(Cliente).filter(Cliente.id == cliente_id).first()
-    if not cliente:
-        raise HTTPException(status_code=404, detail="Cliente no encontrado")
-    
-    cliente.nombre = cliente_actualizado.nombre
-    cliente.telefono = cliente_actualizado.telefono
-    db.commit()
-    db.refresh(cliente)
-    return cliente
-
-
-@app.delete("/clientes/{cliente_id}")
-def eliminar_cliente(cliente_id: int, db: Session = Depends(get_db)):
-    cliente = db.query(Cliente).filter(Cliente.id == cliente_id).first()
-    if not cliente:
-        raise HTTPException(status_code=404, detail="Cliente no encontrado")
-    
-    db.delete(cliente)
-    db.commit()
-    return {"mensaje": "Cliente eliminado correctamente"}
 
 
 # =========================================================

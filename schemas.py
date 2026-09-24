@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
 # =========================================================
@@ -21,11 +21,16 @@ class BarberoResponse(BaseModel):
 class ClienteCreate(BaseModel):
     nombre: str
     telefono: str
+    email: EmailStr
+    password: str
+    rol: str = "cliente"
 
 class ClienteResponse(BaseModel):
     id: int
     nombre: str
     telefono: str
+    email: EmailStr
+    rol: str
 
     class Config:
         from_attributes = True
@@ -76,3 +81,10 @@ class CitaResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+# =========================================================
+#                 ESQUEMAS PARA LOGIN
+# =========================================================
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
