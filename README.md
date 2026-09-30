@@ -29,3 +29,42 @@ Si quieres clonar este repositorio y probar la API en tu propio equipo, sigue es
    ```bash
    git clone [https://github.com/Jcgarval/BarberFlow.git](https://github.com/Jcgarval/BarberFlow.git)
    cd BarberFlow
+   ```
+
+2. **Crea y activa un entorno virtual:**
+   ```bash
+   python -m venv venv
+   # En Windows:
+   venv\Scripts\activate
+   # En Linux/WSL o macOS:
+   source venv/bin/activate
+   ```
+
+3. **Instala las dependencias:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Ejecuta el servidor de desarrollo:**
+   ```bash
+   uvicorn main:app --reload
+   ```
+
+## 📖 Documentación de la API
+
+FastAPI autogenera la documentación del proyecto. Una vez que el servidor esté corriendo, puedes interactuar directamente con la API y probar los endpoints protegidos desde tu navegador:
+
+* **Swagger UI:** http://127.0.0.1:8000/docs
+* **ReDoc:** http://127.0.0.1:8000/redoc
+
+## 🔗 Endpoints principales
+
+La API cuenta con un sistema de roles (Cliente / Admin) y validaciones anti-solapamiento de horarios. Algunos de los bloques principales son:
+
+* **🔐 Autenticación:** `/login` (Generación de Bearer Token), `/clientes` (Registro).
+* **📅 Citas:** `/citas` (CRUD completo de reservas con validación de horario comercial).
+* **💈 Catálogo (Protegido para Admin):** `/barberos` y `/servicios`.
+* **👑 Administración:** `/admin/citas/detalles` (Cruce de datos relacionales para mostrar nombres reales en lugar de IDs).
+
+---
+*Desarrollado por José Carlos García Valdelvira - Buscando mi primera oportunidad como Programador Junior Backend o Técnico de Sistemas.*
