@@ -27,7 +27,7 @@ def obtener_barbero(barbero_id: int, db: Session = Depends(get_db)):
     return barbero
 
 @router.put("/{barbero_id}", response_model=BarberoResponse)
-def actualizar_barbero(barbero_id: int, barbero_actualizado: BarberoCreate, db: Session = Depends(get_db)):
+def actualizar_barbero(barbero_id: int, barbero_actualizado: BarberoCreate, db: Session = Depends(get_db), admin: Cliente = Depends(verificar_admin)):
     barbero = db.query(Barbero).filter(Barbero.id == barbero_id).first()
     if not barbero:
         raise HTTPException(status_code=404, detail="Barbero no encontrado")
@@ -38,7 +38,7 @@ def actualizar_barbero(barbero_id: int, barbero_actualizado: BarberoCreate, db: 
     return barbero
 
 @router.delete("/{barbero_id}")
-def eliminar_barbero(barbero_id: int, db: Session = Depends(get_db)):
+def eliminar_barbero(barbero_id: int, db: Session = Depends(get_db), admin: Cliente = Depends(verificar_admin)):
     barbero = db.query(Barbero).filter(Barbero.id == barbero_id).first()
     if not barbero:
         raise HTTPException(status_code=404, detail="Barbero no encontrado")

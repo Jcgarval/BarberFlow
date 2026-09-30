@@ -31,7 +31,7 @@ def obtener_servicio(servicio_id: int, db: Session = Depends(get_db)):
     return servicio
 
 @router.put("/{servicio_id}", response_model=ServicioResponse)
-def actualizar_servicio(servicio_id: int, servicio_actualizado: ServicioCreate, db: Session = Depends(get_db)):
+def actualizar_servicio(servicio_id: int, servicio_actualizado: ServicioCreate, db: Session = Depends(get_db), admin: Cliente = Depends(verificar_admin)):
     servicio = db.query(Servicio).filter(Servicio.id == servicio_id).first()
     if not servicio:
         raise HTTPException(status_code=404, detail="Servicio no encontrado")
@@ -44,7 +44,7 @@ def actualizar_servicio(servicio_id: int, servicio_actualizado: ServicioCreate, 
     return servicio
 
 @router.delete("/{servicio_id}")
-def eliminar_servicio(servicio_id: int, db: Session = Depends(get_db)):
+def eliminar_servicio(servicio_id: int, db: Session = Depends(get_db), admin: Cliente = Depends(verificar_admin)):
     servicio = db.query(Servicio).filter(Servicio.id == servicio_id).first()
     if not servicio:
         raise HTTPException(status_code=404, detail="Servicio no encontrado")
