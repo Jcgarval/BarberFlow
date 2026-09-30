@@ -20,7 +20,6 @@ class BarberoResponse(BaseModel):
 # =========================================================
 class ClienteCreate(BaseModel):
     nombre: str
-    telefono: str
     email: EmailStr
     password: str
     rol: str = "cliente"
@@ -28,7 +27,6 @@ class ClienteCreate(BaseModel):
 class ClienteResponse(BaseModel):
     id: int
     nombre: str
-    telefono: str
     email: EmailStr
     rol: str
 

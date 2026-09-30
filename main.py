@@ -108,7 +108,6 @@ def crear_cliente(cliente: ClienteCreate, db: Session = Depends(get_db)):
     # 3. Guardamos el cliente con la contraseña cifrada
     nuevo_cliente = Cliente(
         nombre=cliente.nombre, 
-        telefono=cliente.telefono,
         email=cliente.email,
         hashed_password=hashed_pwd,
         rol=cliente.rol
@@ -354,3 +353,30 @@ def eliminar_cita(cita_id: int, db: Session = Depends(get_db)):
     db.delete(cita)
     db.commit()
     return {"mensaje": "Cita eliminada correctamente"}
+
+
+# =========================================================
+#       NUEVA RUTA DE ADMINISTRADOR (NOMBRES REALES)
+# =========================================================
+@app.get("/admin/citas/detalles")
+def obtener_citas_detalladas(db: Session = Depends(get_db), admin: Cliente = Depends(verificar_admin)):
+    citas = db.query(Cita).all()
+    resultado = []
+    
+    for cita in citas:
+        cliente = db.query(Cliente).filter(Cliente.id == cita.cliente_id).first()
+        barbero = db.query(Barbero).filter(Barbero.id == cita.barbero_id).first()
+        servicio = db.query(Servicio).filter(Servicio.id == cita.servicio_id).first()
+        
+        # Forzamos el formato ISO para garantizar que Android reciba la 'T' en la fecha
+        fecha_str = cita.fecha_hora.isoformat() if hasattr(cita.fecha_hora, 'isoformat') else str(cita.fecha_hora)
+        
+        resultado.append({
+            "id": cita.id,
+            "fecha_hora": fecha_str,
+            "cliente_nombre": cliente.nombre if cliente else "Desconocido",
+            "barbero_nombre": barbero.nombre if barbero else "Desconocido",
+            "servicio_nombre": servicio.nombre if servicio else "Desconocido"
+        })
+        
+    return resultado
