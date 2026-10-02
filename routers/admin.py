@@ -9,7 +9,7 @@ router = APIRouter(prefix="/admin", tags=["Administración"])
 
 @router.get("/citas/detalles")
 def obtener_citas_detalladas(db: Session = Depends(get_db), admin: Cliente = Depends(verificar_admin)):
-    citas = db.query(Cita).all()
+    citas = db.query(Cita).order_by(Cita.fecha_hora).all()
     resultado = []
     
     for cita in citas:
@@ -22,6 +22,7 @@ def obtener_citas_detalladas(db: Session = Depends(get_db), admin: Cliente = Dep
         resultado.append({
             "id": cita.id,
             "fecha_hora": fecha_str,
+            "estado": cita.estado,
             "cliente_nombre": cliente.nombre if cliente else "Desconocido",
             "barbero_nombre": barbero.nombre if barbero else "Desconocido",
             "servicio_nombre": servicio.nombre if servicio else "Desconocido"
