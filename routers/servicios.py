@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Servicio, Cliente
+from models import Servicio, Cliente, Cita
 from schemas import ServicioCreate, ServicioResponse
 from security import verificar_admin
 
@@ -21,7 +21,8 @@ def crear_servicio(servicio: ServicioCreate, db: Session = Depends(get_db), admi
 
 @router.get("/", response_model=list[ServicioResponse])
 def obtener_servicios(db: Session = Depends(get_db)):
-    return db.query(Servicio).all()
+    # Los servicios dados de baja (activo=False) no se ofrecen para reservar
+    return db.query(Servicio).filter(Servicio.activo.is_not(False)).all()
 
 @router.get("/{servicio_id}", response_model=ServicioResponse)
 def obtener_servicio(servicio_id: int, db: Session = Depends(get_db)):
@@ -49,6 +50,14 @@ def eliminar_servicio(servicio_id: int, db: Session = Depends(get_db), admin: Cl
     if not servicio:
         raise HTTPException(status_code=404, detail="Servicio no encontrado")
     
+    # Si el servicio tiene citas (aunque sean antiguas o canceladas) NO se borra:
+    # se da de baja para que no se pueda reservar, pero el historial sigue mostrando su nombre.
+    tiene_citas = db.query(Cita.id).filter(Cita.servicio_id == servicio_id).first() is not None
+    if tiene_citas:
+        servicio.activo = False
+        db.commit()
+        return {"mensaje": "El servicio tiene citas asociadas, así que se ha dado de baja en lugar de borrarse. El historial se conserva."}
+
     db.delete(servicio)
     db.commit()
     return {"mensaje": "Servicio eliminado correctamente"}

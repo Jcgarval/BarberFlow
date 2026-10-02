@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Barbero, Cliente
+from models import Barbero, Cliente, Cita
 from schemas import BarberoCreate, BarberoResponse
 from security import verificar_admin
 
@@ -17,7 +17,8 @@ def crear_barbero(barbero: BarberoCreate, db: Session = Depends(get_db), admin: 
 
 @router.get("/", response_model=list[BarberoResponse])
 def obtener_barberos(db: Session = Depends(get_db)):
-    return db.query(Barbero).all()
+    # Los barberos dados de baja (activo=False) no aparecen para reservar
+    return db.query(Barbero).filter(Barbero.activo.is_not(False)).all()
 
 @router.get("/{barbero_id}", response_model=BarberoResponse)
 def obtener_barbero(barbero_id: int, db: Session = Depends(get_db)):
@@ -43,6 +44,13 @@ def eliminar_barbero(barbero_id: int, db: Session = Depends(get_db), admin: Clie
     if not barbero:
         raise HTTPException(status_code=404, detail="Barbero no encontrado")
     
+    # Si el barbero tiene citas NO se borra: se da de baja y el historial conserva su nombre.
+    tiene_citas = db.query(Cita.id).filter(Cita.barbero_id == barbero_id).first() is not None
+    if tiene_citas:
+        barbero.activo = False
+        db.commit()
+        return {"mensaje": "El barbero tiene citas asociadas, así que se ha dado de baja en lugar de borrarse. El historial se conserva."}
+
     db.delete(barbero)
     db.commit()
     return {"mensaje": "Barbero eliminado correctamente"}

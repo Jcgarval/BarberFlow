@@ -90,6 +90,8 @@ def _comprobar_entidades(db: Session, cliente_id: int, barbero_id: int, servicio
     servicio = db.query(Servicio).filter(Servicio.id == servicio_id).first()
     if not servicio:
         raise HTTPException(status_code=404, detail="El servicio especificado no existe")
+    if servicio.activo is False:
+        raise HTTPException(status_code=400, detail="Ese servicio ya no está disponible")
     return servicio
 
 
@@ -105,11 +107,16 @@ def obtener_disponibilidad(
     db: Session = Depends(get_db),
     usuario: Cliente = Depends(get_usuario_actual),
 ):
-    if not db.query(Barbero).filter(Barbero.id == barbero_id).first():
+    barbero = db.query(Barbero).filter(Barbero.id == barbero_id).first()
+    if not barbero:
         raise HTTPException(status_code=404, detail="El barbero especificado no existe")
+    if barbero.activo is False:
+        raise HTTPException(status_code=400, detail="Ese barbero no está disponible")
     servicio = db.query(Servicio).filter(Servicio.id == servicio_id).first()
     if not servicio:
         raise HTTPException(status_code=404, detail="El servicio especificado no existe")
+    if servicio.activo is False:
+        raise HTTPException(status_code=400, detail="Ese servicio ya no está disponible")
 
     ocupados = _citas_activas_del_dia(db, barbero_id, fecha)
     cierre = datetime.combine(fecha, time(HORA_CIERRE))

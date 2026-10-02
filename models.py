@@ -34,6 +34,7 @@ class Servicio(Base):
     nombre = Column(String, index=True)
     duracion_minutos = Column(Integer)
     precio = Column(Float)
+    activo = Column(Boolean, default=True, nullable=False)
 
     citas = relationship("Cita", back_populates="servicio")
 
