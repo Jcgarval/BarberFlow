@@ -46,6 +46,7 @@ class Cita(Base):
     barbero_id = Column(Integer, ForeignKey("barberos.id"))
     servicio_id = Column(Integer, ForeignKey("servicios.id"))
     fecha_hora = Column(DateTime)
+    estado = Column(String, default="pendiente", nullable=False)
 
     # Conexiones de vuelta (relaciones) que faltaban para evitar el error 500
     cliente = relationship("Cliente", back_populates="citas")

@@ -1,3 +1,7 @@
+import os
+import secrets
+from pathlib import Path
+
 import bcrypt
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
@@ -9,7 +13,20 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Cliente
 
-SECRET_KEY = "tu_clave_secreta_super_segura"
+def _cargar_secret_key() -> str:
+    """Lee la clave de la variable de entorno BARBERFLOW_SECRET_KEY.
+    Si no existe, usa (o crea) un archivo local .secret_key que NO se sube a GitHub."""
+    clave = os.getenv("BARBERFLOW_SECRET_KEY")
+    if clave:
+        return clave
+    ruta = Path(__file__).parent / ".secret_key"
+    if ruta.exists():
+        return ruta.read_text().strip()
+    clave = secrets.token_urlsafe(48)
+    ruta.write_text(clave)
+    return clave
+
+SECRET_KEY = _cargar_secret_key()
 ALGORITHM = "HS256"
 
 security = HTTPBearer()

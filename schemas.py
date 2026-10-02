@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
-from datetime import datetime
+from datetime import datetime, date
+from typing import Literal
 
 # =========================================================
 #                 ESQUEMAS PARA BARBEROS
@@ -22,7 +23,6 @@ class ClienteCreate(BaseModel):
     nombre: str
     email: EmailStr
     password: str
-    rol: str = "cliente"
 
 class ClienteResponse(BaseModel):
     id: int
@@ -73,6 +73,7 @@ class CitaResponse(BaseModel):
     barbero_id: int
     servicio_id: int
     fecha_hora: datetime
+    estado: str
 
     barbero: BarberoInfo
     servicio: ServicioInfo
@@ -86,3 +87,16 @@ class CitaResponse(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+# =========================================================
+#            ESQUEMAS: ESTADOS Y DISPONIBILIDAD
+# =========================================================
+class EstadoUpdate(BaseModel):
+    estado: Literal["pendiente", "confirmada", "completada", "cancelada"]
+
+class DisponibilidadResponse(BaseModel):
+    fecha: date
+    barbero_id: int
+    servicio_id: int
+    duracion_minutos: int
+    franjas: list[str]  # horas de inicio libres en formato "HH:MM"
