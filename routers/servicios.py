@@ -24,6 +24,11 @@ def obtener_servicios(db: Session = Depends(get_db)):
     # Los servicios dados de baja (activo=False) no se ofrecen para reservar
     return db.query(Servicio).filter(Servicio.activo.is_not(False)).all()
 
+@router.get("/inactivos", response_model=list[ServicioResponse])
+def obtener_servicios_inactivos(db: Session = Depends(get_db), admin: Cliente = Depends(verificar_admin)):
+    """Servicios dados de baja (solo admin). Va antes de '/{servicio_id}' para que no lo confunda con un id."""
+    return db.query(Servicio).filter(Servicio.activo.is_(False)).all()
+
 @router.get("/{servicio_id}", response_model=ServicioResponse)
 def obtener_servicio(servicio_id: int, db: Session = Depends(get_db)):
     servicio = db.query(Servicio).filter(Servicio.id == servicio_id).first()
@@ -40,6 +45,16 @@ def actualizar_servicio(servicio_id: int, servicio_actualizado: ServicioCreate, 
     servicio.nombre = servicio_actualizado.nombre
     servicio.duracion_minutos = servicio_actualizado.duracion_minutos
     servicio.precio = servicio_actualizado.precio
+    db.commit()
+    db.refresh(servicio)
+    return servicio
+
+@router.post("/{servicio_id}/reactivar", response_model=ServicioResponse)
+def reactivar_servicio(servicio_id: int, db: Session = Depends(get_db), admin: Cliente = Depends(verificar_admin)):
+    servicio = db.query(Servicio).filter(Servicio.id == servicio_id).first()
+    if not servicio:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    servicio.activo = True
     db.commit()
     db.refresh(servicio)
     return servicio

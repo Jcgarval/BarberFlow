@@ -1,12 +1,16 @@
-from pydantic import BaseModel, EmailStr
+from typing import Annotated
+from pydantic import BaseModel, EmailStr, Field, StringConstraints
 from datetime import datetime, date
 from typing import Literal
 
 # =========================================================
 #                 ESQUEMAS PARA BARBEROS
 # =========================================================
+# Nombre sin espacios sobrantes, obligatorio y de longitud razonable
+NombreCorto = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
+
 class BarberoCreate(BaseModel):
-    nombre: str
+    nombre: NombreCorto
 
 class BarberoResponse(BaseModel):
     id: int
@@ -38,9 +42,9 @@ class ClienteResponse(BaseModel):
 #                 ESQUEMAS PARA SERVICIOS
 # =========================================================
 class ServicioCreate(BaseModel):
-    nombre: str
-    duracion_minutos: int
-    precio: float
+    nombre: NombreCorto
+    duracion_minutos: int = Field(gt=0, le=480)   # entre 1 y 480 minutos
+    precio: float = Field(ge=0, le=1000)
 
 class ServicioResponse(BaseModel):
     id: int

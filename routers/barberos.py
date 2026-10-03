@@ -20,6 +20,11 @@ def obtener_barberos(db: Session = Depends(get_db)):
     # Los barberos dados de baja (activo=False) no aparecen para reservar
     return db.query(Barbero).filter(Barbero.activo.is_not(False)).all()
 
+@router.get("/inactivos", response_model=list[BarberoResponse])
+def obtener_barberos_inactivos(db: Session = Depends(get_db), admin: Cliente = Depends(verificar_admin)):
+    """Barberos dados de baja (solo admin). Va antes de '/{barbero_id}' para que no lo confunda con un id."""
+    return db.query(Barbero).filter(Barbero.activo.is_(False)).all()
+
 @router.get("/{barbero_id}", response_model=BarberoResponse)
 def obtener_barbero(barbero_id: int, db: Session = Depends(get_db)):
     barbero = db.query(Barbero).filter(Barbero.id == barbero_id).first()
@@ -34,6 +39,16 @@ def actualizar_barbero(barbero_id: int, barbero_actualizado: BarberoCreate, db: 
         raise HTTPException(status_code=404, detail="Barbero no encontrado")
     
     barbero.nombre = barbero_actualizado.nombre
+    db.commit()
+    db.refresh(barbero)
+    return barbero
+
+@router.post("/{barbero_id}/reactivar", response_model=BarberoResponse)
+def reactivar_barbero(barbero_id: int, db: Session = Depends(get_db), admin: Cliente = Depends(verificar_admin)):
+    barbero = db.query(Barbero).filter(Barbero.id == barbero_id).first()
+    if not barbero:
+        raise HTTPException(status_code=404, detail="Barbero no encontrado")
+    barbero.activo = True
     db.commit()
     db.refresh(barbero)
     return barbero
