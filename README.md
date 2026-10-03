@@ -1,70 +1,145 @@
-# ✂️ BarberFlow API
+<p align="center">
+  <img src="docs/logo.png" width="120" alt="Logo de BarberFlow">
+</p>
 
-BarberFlow es una API RESTful desarrollada con **FastAPI** diseñada para gestionar las citas y el flujo de trabajo de una barbería. Permite la administración ágil de reservas, gestión de personal, control de servicios y autenticación de usuarios.
+<h1 align="center">BarberFlow API</h1>
 
-Este proyecto ha sido desarrollado como parte de mi portfolio personal para demostrar mis habilidades en el desarrollo backend con Python. Recientemente ha sido refactorizado para seguir buenas prácticas de la industria, separando responsabilidades mediante una **arquitectura modular** e implementando **seguridad con tokens JWT**.
+<p align="center">
+  API REST con FastAPI para gestionar citas, barberos y servicios de una barbería.
+</p>
 
-## 🚀 Tecnologías utilizadas
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.x-3776AB?logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/SQLite-SQLAlchemy-003B57?logo=sqlite&logoColor=white" alt="SQLite y SQLAlchemy">
+  <a href="https://github.com/Jcgarval/BarberFlow-Android"><img src="https://img.shields.io/badge/Cliente-Android-3DDC84?logo=android&logoColor=white" alt="Cliente Android"></a>
+</p>
 
-* **Lenguaje:** Python 3.x
-* **Framework:** FastAPI
-* **Servidor ASGI:** Uvicorn
-* **Base de Datos & ORM:** SQLite + SQLAlchemy
-* **Seguridad:** JWT (JSON Web Tokens) y Bcrypt (hashing de contraseñas)
-* **Documentación interactiva:** Swagger UI y ReDoc
+## Descripción
 
-## 🏗️ Arquitectura Modular
+Backend del ecosistema **BarberFlow**. Gestiona usuarios con roles (cliente y administrador), el catálogo de barberos y servicios y las reservas, con las reglas de negocio de una barbería real. Su cliente es la [app Android](https://github.com/Jcgarval/BarberFlow-Android).
 
-El proyecto está diseñado para ser escalable y mantenible, dividiendo el monolito inicial en submódulos utilizando `APIRouter` de FastAPI:
+Proyecto de portfolio personal para demostrar desarrollo backend con Python: arquitectura modular, autenticación con JWT, control de permisos por rol y validación de datos.
 
-* `database.py`: Gestión de la conexión a SQLite.
-* `security.py`: Dependencias de autenticación, roles y encriptación.
-* `routers/`: Directorio que aísla la lógica de cada dominio (Auth, Clientes, Barberos, Servicios, Citas, y Panel de Administración).
+## Funcionalidades y reglas de negocio
 
-## ⚙️ Instalación y ejecución en local
+- **Autenticación JWT** (HS256, caducidad de 24 horas) y contraseñas cifradas con bcrypt.
+- **Permisos por rol:** un cliente solo ve, reserva y cancela sus propias citas; el administrador gestiona todo. El rol nunca se acepta desde el registro.
+- **Horas libres:** `GET /citas/disponibilidad` calcula las franjas de inicio (cada 30 minutos, de 09:00 a 20:00) teniendo en cuenta la duración del servicio y las citas del barbero.
+- **Sin solapes:** un barbero no puede tener dos citas a la vez; la cita completa debe terminar dentro del horario y no se aceptan fechas pasadas.
+- **Estados de cita:** `pendiente`, `confirmada`, `completada` y `cancelada`. Una cita cancelada libera su hueco. El cliente solo puede cancelar; el administrador puede cambiar a cualquier estado.
+- **Baja lógica:** un barbero o servicio con citas asociadas se da de baja (`activo = false`) en lugar de borrarse, conservando el historial, y se puede reactivar.
+- **Validación de datos** con Pydantic (nombres, duración entre 1 y 480 minutos, precio entre 0 y 1000).
+- **Migración automática** de columnas nuevas al arrancar sobre una base de datos existente.
 
-Si quieres clonar este repositorio y probar la API en tu propio equipo, sigue estos pasos:
+## Tecnologías
+
+- Python 3, FastAPI y Uvicorn
+- SQLite y SQLAlchemy
+- Pydantic para esquemas y validación
+- JWT (python-jose) y bcrypt
+
+## Estructura
+
+```
+├── main.py            # Aplicación, routers y migración de columnas
+├── database.py        # Conexión a SQLite
+├── models.py          # Modelos SQLAlchemy
+├── schemas.py         # Esquemas Pydantic
+├── security.py        # JWT, hashing y dependencias de autenticación y roles
+├── crear_admin.py     # Script para crear o ascender administradores
+├── requirements.txt
+└── routers/
+    ├── auth.py        # Login
+    ├── clientes.py    # Registro
+    ├── barberos.py
+    ├── servicios.py
+    ├── citas.py       # Disponibilidad, reservas y estados
+    └── admin.py       # Vista detallada de citas
+```
+
+## Instalación y ejecución
 
 1. **Clona el repositorio:**
+
    ```bash
-   git clone [https://github.com/Jcgarval/BarberFlow.git](https://github.com/Jcgarval/BarberFlow.git)
+   git clone https://github.com/Jcgarval/BarberFlow.git
    cd BarberFlow
    ```
 
 2. **Crea y activa un entorno virtual:**
+
    ```bash
    python -m venv venv
-   # En Windows:
+   # Windows:
    venv\Scripts\activate
-   # En Linux/WSL o macOS:
+   # Linux, WSL o macOS:
    source venv/bin/activate
    ```
 
 3. **Instala las dependencias:**
+
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Ejecuta el servidor de desarrollo:**
+4. **Arranca el servidor:**
+
    ```bash
    uvicorn main:app --reload
    ```
 
-## 📖 Documentación de la API
+   Para usar la app desde un móvil físico en la misma red, añade `--host 0.0.0.0`.
 
-FastAPI autogenera la documentación del proyecto. Una vez que el servidor esté corriendo, puedes interactuar directamente con la API y probar los endpoints protegidos desde tu navegador:
+5. **Crea un administrador:**
 
-* **Swagger UI:** http://127.0.0.1:8000/docs
-* **ReDoc:** http://127.0.0.1:8000/redoc
+   ```bash
+   python crear_admin.py "Tu Nombre" tu@correo.com
+   ```
 
-## 🔗 Endpoints principales
+   La contraseña se pide por teclado. Si el correo ya existe, ese usuario pasa a ser administrador.
 
-La API cuenta con un sistema de roles (Cliente / Admin) y validaciones anti-solapamiento de horarios. Algunos de los bloques principales son:
+### Configuración
 
-* **🔐 Autenticación:** `/login` (Generación de Bearer Token), `/clientes` (Registro).
-* **📅 Citas:** `/citas` (CRUD completo de reservas con validación de horario comercial).
-* **💈 Catálogo (Protegido para Admin):** `/barberos` y `/servicios`.
-* **👑 Administración:** `/admin/citas/detalles` (Cruce de datos relacionales para mostrar nombres reales en lugar de IDs).
+- La clave que firma los tokens se lee de la variable de entorno `BARBERFLOW_SECRET_KEY`. Si no existe, el servidor genera un archivo local `.secret_key` (excluido de Git) y lo reutiliza.
+- La base de datos es `barberflow.db` (SQLite, también excluida de Git).
 
----
-*Desarrollado por José Carlos García Valdelvira - Buscando mi primera oportunidad como Programador Junior Backend o Técnico de Sistemas.*
+## Documentación interactiva
+
+Con el servidor en marcha:
+
+- **Swagger UI:** http://127.0.0.1:8000/docs
+- **ReDoc:** http://127.0.0.1:8000/redoc
+
+## Endpoints
+
+**Acceso:** 🌐 público · 🔑 requiere token · 🛡️ solo administrador
+
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| POST | `/login` | 🌐 | Inicia sesión y devuelve el token |
+| POST | `/clientes/` | 🌐 | Registro de cliente |
+| GET | `/barberos/` · `/barberos/{id}` | 🌐 | Barberos activos |
+| POST · PUT · DELETE | `/barberos/` · `/barberos/{id}` | 🛡️ | Alta, edición y baja o borrado |
+| GET | `/barberos/inactivos` | 🛡️ | Barberos dados de baja |
+| POST | `/barberos/{id}/reactivar` | 🛡️ | Reactiva un barbero |
+| GET | `/servicios/` · `/servicios/{id}` | 🌐 | Servicios activos |
+| POST · PUT · DELETE | `/servicios/` · `/servicios/{id}` | 🛡️ | Alta, edición y baja o borrado |
+| GET | `/servicios/inactivos` | 🛡️ | Servicios dados de baja |
+| POST | `/servicios/{id}/reactivar` | 🛡️ | Reactiva un servicio |
+| GET | `/citas/disponibilidad` | 🔑 | Horas libres (`barbero_id`, `servicio_id`, `fecha`) |
+| POST | `/citas/` | 🔑 | Reserva una cita (el cliente, solo a su nombre) |
+| GET | `/citas/` | 🔑 | Lista de citas (cliente: las suyas; admin: todas, con filtros) |
+| GET · PUT · DELETE | `/citas/{id}` | 🔑 | Consulta, modifica o elimina (propietario o admin) |
+| PATCH | `/citas/{id}/estado` | 🔑 | Cambia el estado (el cliente, solo cancelar) |
+| GET | `/admin/citas/detalles` | 🛡️ | Citas con nombres de cliente, barbero y servicio |
+
+## Próximas mejoras
+
+- Suite de pruebas automáticas con `pytest`.
+- Restringir en el servidor los días de cierre.
+- Migraciones de base de datos con Alembic.
+
+## Autor
+
+**José Carlos** · [@Jcgarval](https://github.com/Jcgarval)
