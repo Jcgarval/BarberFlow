@@ -13,6 +13,7 @@
   <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
   <img src="https://img.shields.io/badge/SQLite-SQLAlchemy-003B57?logo=sqlite&logoColor=white" alt="SQLite y SQLAlchemy">
   <a href="https://github.com/Jcgarval/BarberFlow-Android"><img src="https://img.shields.io/badge/Cliente-Android-3DDC84?logo=android&logoColor=white" alt="Cliente Android"></a>
+  <a href="https://github.com/Jcgarval/BarberFlow/actions/workflows/tests.yml"><img src="https://github.com/Jcgarval/BarberFlow/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
 </p>
 
 ## Descripción
@@ -27,10 +28,12 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
 - **Permisos por rol:** un cliente solo ve, reserva y cancela sus propias citas; el administrador gestiona todo. El rol nunca se acepta desde el registro.
 - **Horas libres:** `GET /citas/disponibilidad` calcula las franjas de inicio (cada 30 minutos, de 09:00 a 20:00) teniendo en cuenta la duración del servicio y las citas del barbero.
 - **Sin solapes:** un barbero no puede tener dos citas a la vez; la cita completa debe terminar dentro del horario y no se aceptan fechas pasadas.
+- **Días de cierre:** los domingos no se puede reservar y no se ofrece ninguna franja (la regla vive en el servidor, no solo en la app).
 - **Estados de cita:** `pendiente`, `confirmada`, `completada` y `cancelada`. Una cita cancelada libera su hueco. El cliente solo puede cancelar; el administrador puede cambiar a cualquier estado.
 - **Baja lógica:** un barbero o servicio con citas asociadas se da de baja (`activo = false`) en lugar de borrarse, conservando el historial, y se puede reactivar.
 - **Validación de datos** con Pydantic (nombres, duración entre 1 y 480 minutos, precio entre 0 y 1000).
 - **Migración automática** de columnas nuevas al arrancar sobre una base de datos existente.
+- **Pruebas automáticas** con pytest que se ejecutan en cada `push` mediante GitHub Actions.
 
 ## Tecnologías
 
@@ -38,6 +41,7 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
 - SQLite y SQLAlchemy
 - Pydantic para esquemas y validación
 - JWT (python-jose) y bcrypt
+- pytest y GitHub Actions para las pruebas automáticas
 
 ## Estructura
 
@@ -49,6 +53,10 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
 ├── security.py        # JWT, hashing y dependencias de autenticación y roles
 ├── crear_admin.py     # Script para crear o ascender administradores
 ├── requirements.txt
+├── requirements-dev.txt   # dependencias de desarrollo y pruebas
+├── pytest.ini
+├── .github/workflows/tests.yml   # integración continua
+├── tests/             # pruebas de autenticación, catálogo, citas, administración y migración
 └── routers/
     ├── auth.py        # Login
     ├── clientes.py    # Registro
@@ -102,7 +110,23 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
 ### Configuración
 
 - La clave que firma los tokens se lee de la variable de entorno `BARBERFLOW_SECRET_KEY`. Si no existe, el servidor genera un archivo local `.secret_key` (excluido de Git) y lo reutiliza.
-- La base de datos es `barberflow.db` (SQLite, también excluida de Git).
+- La base de datos es `barberflow.db` (SQLite, también excluida de Git). Se puede cambiar con la variable `BARBERFLOW_DATABASE_URL`.
+
+## Pruebas
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+La suite (unas 80 pruebas, en pocos segundos) usa una **base de datos temporal y su propia clave secreta**, así que no toca `barberflow.db` ni crea `.secret_key`. Cubre:
+
+- **Autenticación:** registro, login, tokens manipulados, caducados o firmados con otra clave, y acceso por rol.
+- **Catálogo:** permisos, validación de datos, baja lógica y reactivación.
+- **Citas:** horas libres, reservas, solapes, horario de apertura, días de cierre, fechas pasadas, estados y quién puede ver o modificar cada cita.
+- **Migración:** actualización de una base de datos antigua sin perder datos.
+
+Cada `push` y cada pull request ejecutan estas pruebas en GitHub Actions (`.github/workflows/tests.yml`).
 
 ## Documentación interactiva
 
@@ -136,9 +160,9 @@ Con el servidor en marcha:
 
 ## Próximas mejoras
 
-- Suite de pruebas automáticas con `pytest`.
-- Restringir en el servidor los días de cierre.
 - Migraciones de base de datos con Alembic.
+- Contenedor Docker para desplegar la API.
+- Paginación en los listados de citas.
 
 ## Autor
 

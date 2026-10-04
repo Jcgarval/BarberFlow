@@ -14,6 +14,7 @@ HORA_APERTURA = 9
 HORA_CIERRE = 20
 PASO_MINUTOS = 30  # las franjas se ofrecen cada 30 minutos
 DURACION_POR_DEFECTO = 30  # por si el servicio de una cita antigua fue borrado
+DIAS_CERRADO = {6}  # días en los que la barbería no abre (lunes=0 ... domingo=6)
 
 
 # ---------------------------------------------------------
@@ -58,7 +59,9 @@ def _citas_activas_del_dia(db: Session, barbero_id: int, dia: date, excluir_id: 
 
 
 def _validar_horario(inicio: datetime, duracion: int):
-    """Comprueba horario comercial (la cita entera debe caber) y que no sea en el pasado."""
+    """Comprueba día de apertura, horario comercial (la cita entera debe caber) y que no sea en el pasado."""
+    if inicio.weekday() in DIAS_CERRADO:
+        raise HTTPException(status_code=400, detail="La barbería cierra los domingos")
     fin = inicio + timedelta(minutes=duracion)
     apertura = datetime.combine(inicio.date(), time(HORA_APERTURA))
     cierre = datetime.combine(inicio.date(), time(HORA_CIERRE))
@@ -124,7 +127,8 @@ def obtener_disponibilidad(
 
     franjas = []
     inicio = datetime.combine(fecha, time(HORA_APERTURA))
-    while inicio + timedelta(minutes=servicio.duracion_minutos) <= cierre:
+    # En los días de cierre no se ofrece ninguna franja
+    while fecha.weekday() not in DIAS_CERRADO and inicio + timedelta(minutes=servicio.duracion_minutos) <= cierre:
         fin = inicio + timedelta(minutes=servicio.duracion_minutos)
         libre = inicio > ahora and all(not (inicio < o_fin and fin > o_ini) for o_ini, o_fin in ocupados)
         if libre:

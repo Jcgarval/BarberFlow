@@ -1,5 +1,5 @@
 from typing import Annotated
-from pydantic import BaseModel, EmailStr, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 from datetime import datetime, date
 from typing import Literal
 
@@ -16,8 +16,7 @@ class BarberoResponse(BaseModel):
     id: int
     nombre: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =========================================================
@@ -34,8 +33,7 @@ class ClienteResponse(BaseModel):
     email: EmailStr
     rol: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =========================================================
@@ -52,8 +50,7 @@ class ServicioResponse(BaseModel):
     duracion_minutos: int
     precio: float
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =========================================================
@@ -82,8 +79,7 @@ class CitaResponse(BaseModel):
     barbero: BarberoInfo
     servicio: ServicioInfo
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # =========================================================
 #                 ESQUEMAS PARA LOGIN

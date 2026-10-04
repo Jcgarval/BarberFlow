@@ -9,17 +9,17 @@ from routers import auth, clientes, barberos, servicios, citas, admin
 # Crea las tablas en la base de datos si no existen
 Base.metadata.create_all(bind=engine)
 
-def migrar_columnas():
+def migrar_columnas(motor=engine):
     """create_all no añade columnas a tablas que ya existen: las añadimos a mano si faltan."""
     nuevas = [
         ("citas", "estado", "VARCHAR NOT NULL DEFAULT 'pendiente'"),
         ("servicios", "activo", "BOOLEAN NOT NULL DEFAULT 1"),
     ]
-    inspector = inspect(engine)
+    inspector = inspect(motor)
     for tabla, columna, definicion in nuevas:
         existentes = [c["name"] for c in inspector.get_columns(tabla)]
         if columna not in existentes:
-            with engine.begin() as conn:
+            with motor.begin() as conn:
                 conn.execute(text(f"ALTER TABLE {tabla} ADD COLUMN {columna} {definicion}"))
 
 migrar_columnas()
