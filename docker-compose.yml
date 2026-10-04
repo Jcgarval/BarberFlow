@@ -1,0 +1,19 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # La clave que firma los tokens. Se define en el archivo .env (mira .env.example)
+      BARBERFLOW_SECRET_KEY: "${BARBERFLOW_SECRET_KEY:?Falta BARBERFLOW_SECRET_KEY. Copia .env.example a .env y rellenala}"
+    volumes:
+      - barberflow-datos:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  barberflow-datos:
