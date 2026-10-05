@@ -97,8 +97,10 @@ def test_la_cita_debe_acabar_antes_del_cierre(ana, reservar, dia_laborable):
 
 
 def test_no_se_reserva_en_el_pasado(ana, reservar):
-    ayer = date.today() - timedelta(days=1)
-    respuesta = reservar(ana, ayer, 12)
+    pasado = date.today() - timedelta(days=1)
+    if pasado.weekday() == 6:  # si ayer fue domingo, la respuesta sería «cierra los domingos»: tomamos el sábado
+        pasado -= timedelta(days=1)
+    respuesta = reservar(ana, pasado, 12)
     assert respuesta.status_code == 400
     assert "pasado" in respuesta.json()["detail"]
 

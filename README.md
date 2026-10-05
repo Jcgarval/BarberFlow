@@ -42,7 +42,6 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
 - Pydantic para esquemas y validación
 - JWT (python-jose) y bcrypt
 - pytest y GitHub Actions para las pruebas automáticas
-- Docker y Docker Compose (opcional)
 
 ## Estructura
 
@@ -56,7 +55,6 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
 ├── requirements.txt
 ├── requirements-dev.txt   # dependencias de desarrollo y pruebas
 ├── pytest.ini
-├── Dockerfile · docker-compose.yml · .dockerignore · .env.example   # ejecución con Docker
 ├── .github/workflows/tests.yml   # integración continua
 ├── tests/             # pruebas de autenticación, catálogo, citas, administración y migración
 └── routers/
@@ -108,32 +106,6 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
    ```
 
    La contraseña se pide por teclado. Si el correo ya existe, ese usuario pasa a ser administrador.
-
-### Con Docker (opcional)
-
-Si prefieres no instalar Python ni dependencias, la API se levanta con un solo comando:
-
-1. Crea tu archivo de configuración a partir del ejemplo y pon una clave secreta propia:
-
-   ```bash
-   cp .env.example .env        # en PowerShell: copy .env.example .env
-   python -c "import secrets; print(secrets.token_urlsafe(48))"   # genera una clave y pégala en .env
-   ```
-
-2. Construye y arranca el contenedor:
-
-   ```bash
-   docker compose up --build
-   ```
-
-3. La API queda en http://localhost:8000/docs.
-4. Crea un administrador dentro del contenedor:
-
-   ```bash
-   docker compose exec api python crear_admin.py "Tu Nombre" tu@correo.com
-   ```
-
-La base de datos se guarda en un volumen de Docker (`barberflow-datos`), así que sobrevive a reinicios y reconstrucciones. El archivo `.env` está excluido de Git.
 
 ### Configuración
 
