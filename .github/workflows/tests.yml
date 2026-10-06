@@ -6,7 +6,8 @@ on:
 
 jobs:
   pytest:
-    runs-on: ubuntu-latest
+    # Versión fija (en vez de ubuntu-latest) para que un cambio de GitHub no rompa las pruebas
+    runs-on: ubuntu-24.04
     steps:
       - name: Descargar el código
         uses: actions/checkout@v4
@@ -23,5 +24,11 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements-dev.txt
 
-      - name: Ejecutar las pruebas
-        run: pytest
+      - name: Ejecutar las pruebas con cobertura (falla si baja del 90 %)
+        run: pytest --cov --cov-report=term-missing --cov-fail-under=90
+
+      - name: Resumen de cobertura en la página de la ejecución
+        if: always()
+        run: |
+          echo "## Cobertura de las pruebas" >> "$GITHUB_STEP_SUMMARY"
+          coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" || true

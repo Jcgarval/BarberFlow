@@ -14,6 +14,7 @@
   <img src="https://img.shields.io/badge/SQLite-SQLAlchemy-003B57?logo=sqlite&logoColor=white" alt="SQLite y SQLAlchemy">
   <a href="https://github.com/Jcgarval/BarberFlow-Android"><img src="https://img.shields.io/badge/Cliente-Android-3DDC84?logo=android&logoColor=white" alt="Cliente Android"></a>
   <a href="https://github.com/Jcgarval/BarberFlow/actions/workflows/tests.yml"><img src="https://github.com/Jcgarval/BarberFlow/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
+  <img src="https://img.shields.io/badge/cobertura-%E2%89%A590%25-brightgreen" alt="Cobertura de pruebas: al menos el 90 %">
 </p>
 
 ## Descripción
@@ -33,7 +34,7 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
 - **Baja lógica:** un barbero o servicio con citas asociadas se da de baja (`activo = false`) en lugar de borrarse, conservando el historial, y se puede reactivar.
 - **Validación de datos** con Pydantic (nombres, duración entre 1 y 480 minutos, precio entre 0 y 1000).
 - **Migración automática** de columnas nuevas al arrancar sobre una base de datos existente.
-- **Pruebas automáticas** con pytest que se ejecutan en cada `push` mediante GitHub Actions.
+- **Pruebas automáticas** con pytest (cobertura del 95 %) que se ejecutan en cada `push` mediante GitHub Actions.
 
 ## Tecnologías
 
@@ -119,14 +120,21 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-La suite (unas 80 pruebas, en pocos segundos) usa una **base de datos temporal y su propia clave secreta**, así que no toca `barberflow.db` ni crea `.secret_key`. Cubre:
+La suite (más de 80 pruebas, en pocos segundos) usa una **base de datos temporal y su propia clave secreta**, así que no toca `barberflow.db` ni crea `.secret_key`. Cubre:
 
 - **Autenticación:** registro, login, tokens manipulados, caducados o firmados con otra clave, y acceso por rol.
 - **Catálogo:** permisos, validación de datos, baja lógica y reactivación.
 - **Citas:** horas libres, reservas, solapes, horario de apertura, días de cierre, fechas pasadas, estados y quién puede ver o modificar cada cita.
 - **Migración:** actualización de una base de datos antigua sin perder datos.
+- **Administración:** el script `crear_admin.py`, la única forma de crear administradores.
 
-Cada `push` y cada pull request ejecutan estas pruebas en GitHub Actions (`.github/workflows/tests.yml`).
+Para ver qué porcentaje del código recorren las pruebas:
+
+```bash
+pytest --cov --cov-report=term-missing
+```
+
+La cobertura actual ronda el **95 %**. Cada `push` y cada pull request ejecutan las pruebas en GitHub Actions (`.github/workflows/tests.yml`) y **la ejecución falla si la cobertura baja del 90 %**; por eso la insignia indica «≥ 90 %». El resumen con la tabla aparece en la página de cada ejecución.
 
 ## Documentación interactiva
 

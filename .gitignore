@@ -9,3 +9,6 @@ env/
 .env
 .secret_key
 .pytest_cache/
+
+.coverage
+htmlcov/
