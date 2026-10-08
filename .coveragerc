@@ -2,6 +2,7 @@
 source = .
 omit =
     tests/*
+    alembic/*
     .venv/*
     venv/*
 

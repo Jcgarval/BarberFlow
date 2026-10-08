@@ -18,3 +18,5 @@ uvicorn==0.49.0
 bcrypt>=4.0
 python-jose>=3.3
 email-validator>=2.0
+# Migraciones de base de datos
+alembic>=1.13

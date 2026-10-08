@@ -6,11 +6,12 @@ Uso:   python crear_admin.py "Nombre Apellido" correo@ejemplo.com
 import sys
 import getpass
 
-from database import SessionLocal, engine
-from models import Base, Cliente
+from database import SessionLocal
+from migraciones import preparar_base_de_datos
+from models import Cliente
 from security import get_password_hash
 
-Base.metadata.create_all(bind=engine)
+preparar_base_de_datos()
 
 
 def main():
