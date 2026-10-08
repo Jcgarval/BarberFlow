@@ -94,3 +94,29 @@ def test_un_token_firmado_con_otra_clave_se_rechaza(client, ana):
 
 def test_un_cliente_no_puede_entrar_en_rutas_de_administrador(client, ana):
     assert client.get("/admin/citas/detalles", headers=ana["headers"]).status_code == 403
+
+
+# ------------------------------------------------------------------ validación del registro
+@pytest.mark.parametrize("password", [
+    "corta1",                 # menos de 8 caracteres
+    "solo-letras-largas",     # sin número
+    "123456789",              # sin letra
+    "        ",               # solo espacios
+    "a1" * 40,                # 80 bytes: bcrypt no la admite
+    "ñ" * 37 + "1",           # 38 caracteres pero 75 bytes
+])
+def test_registro_rechaza_contrasenas_no_validas(client, password):
+    assert registrar(client, password=password).status_code == 422
+
+
+def test_registro_acepta_una_contrasena_de_72_bytes(client):
+    assert registrar(client, password="a1" * 36).status_code == 200
+
+
+@pytest.mark.parametrize("nombre", ["", "   ", "x" * 61])
+def test_registro_rechaza_nombres_no_validos(client, nombre):
+    assert registrar(client, nombre=nombre).status_code == 422
+
+
+def test_registro_guarda_el_nombre_sin_espacios_sobrantes(client):
+    assert registrar(client, nombre="  Ana  ").json()["nombre"] == "Ana"

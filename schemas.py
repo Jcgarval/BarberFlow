@@ -1,5 +1,5 @@
 from typing import Annotated
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator
 from datetime import datetime, date
 from typing import Literal
 
@@ -23,9 +23,20 @@ class BarberoResponse(BaseModel):
 #                 ESQUEMAS PARA CLIENTES
 # =========================================================
 class ClienteCreate(BaseModel):
-    nombre: str
+    nombre: NombreCorto          # sin espacios sobrantes, de 1 a 60 caracteres
     email: EmailStr
     password: str
+
+    @field_validator("password")
+    @classmethod
+    def validar_password(cls, valor: str) -> str:
+        if len(valor) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres")
+        if len(valor.encode("utf-8")) > 72:  # límite de bcrypt
+            raise ValueError("La contraseña es demasiado larga (máximo 72 bytes)")
+        if not any(c.isalpha() for c in valor) or not any(c.isdigit() for c in valor):
+            raise ValueError("La contraseña debe incluir al menos una letra y un número")
+        return valor
 
 class ClienteResponse(BaseModel):
     id: int

@@ -32,7 +32,7 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
 - **Días de cierre:** los domingos no se puede reservar y no se ofrece ninguna franja (la regla vive en el servidor, no solo en la app).
 - **Estados de cita:** `pendiente`, `confirmada`, `completada` y `cancelada`. Una cita cancelada libera su hueco. El cliente solo puede cancelar; el administrador puede cambiar a cualquier estado.
 - **Baja lógica:** un barbero o servicio con citas asociadas se da de baja (`activo = false`) en lugar de borrarse, conservando el historial, y se puede reactivar.
-- **Validación de datos** con Pydantic (nombres, duración entre 1 y 480 minutos, precio entre 0 y 1000).
+- **Validación de datos** con Pydantic (nombres, duración entre 1 y 480 minutos, precio entre 0 y 1000; contraseñas de 8 a 72 bytes con al menos una letra y un número).
 - **Migración automática** de columnas nuevas al arrancar sobre una base de datos existente.
 - **Pruebas automáticas** con pytest (cobertura del 95 %) que se ejecutan en cada `push` mediante GitHub Actions.
 
@@ -122,7 +122,7 @@ pytest
 
 La suite (más de 80 pruebas, en pocos segundos) usa una **base de datos temporal y su propia clave secreta**, así que no toca `barberflow.db` ni crea `.secret_key`. Cubre:
 
-- **Autenticación:** registro, login, tokens manipulados, caducados o firmados con otra clave, y acceso por rol.
+- **Autenticación:** registro (con validación de nombre y contraseña), login, tokens manipulados, caducados o firmados con otra clave, y acceso por rol.
 - **Catálogo:** permisos, validación de datos, baja lógica y reactivación.
 - **Citas:** horas libres, reservas, solapes, horario de apertura, días de cierre, fechas pasadas, estados y quién puede ver o modificar cada cita.
 - **Migración:** actualización de una base de datos antigua sin perder datos.
