@@ -11,8 +11,9 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.x-3776AB?logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
-  <img src="https://img.shields.io/badge/SQLite-SQLAlchemy-003B57?logo=sqlite&logoColor=white" alt="SQLite y SQLAlchemy">
-  <img src="https://img.shields.io/badge/migraciones-Alembic-6BA81E" alt="Migraciones con Alembic">
+  <img src="https://img.shields.io/badge/SQLAlchemy-Alembic-D71F00?logo=sqlalchemy&logoColor=white" alt="SQLAlchemy y Alembic">
+  <img src="https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL en Neon">
+  <img src="https://img.shields.io/badge/Desplegada%20en-Render-46E3B7?logo=render&logoColor=white" alt="Desplegada en Render">
   <a href="https://github.com/Jcgarval/BarberFlow-Android"><img src="https://img.shields.io/badge/Cliente-Android-3DDC84?logo=android&logoColor=white" alt="Cliente Android"></a>
   <a href="https://github.com/Jcgarval/BarberFlow/actions/workflows/tests.yml"><img src="https://github.com/Jcgarval/BarberFlow/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
   <img src="https://img.shields.io/badge/cobertura-%E2%89%A590%25-brightgreen" alt="Cobertura de pruebas: al menos el 90 %">
@@ -22,7 +23,15 @@
 
 Backend del ecosistema **BarberFlow**. Gestiona usuarios con roles (cliente y administrador), el catálogo de barberos y servicios y las reservas, con las reglas de negocio de una barbería real. Su cliente es la [app Android](https://github.com/Jcgarval/BarberFlow-Android).
 
-Proyecto de portfolio personal para demostrar desarrollo backend con Python: arquitectura modular, autenticación con JWT, control de permisos por rol y validación de datos.
+Proyecto de portfolio personal para demostrar desarrollo backend con Python: arquitectura modular, autenticación con JWT, control de permisos por rol, validación de datos, migraciones de base de datos y despliegue en la nube.
+
+## API en producción
+
+La API está desplegada y se puede probar desde el navegador:
+
+- **Documentación interactiva (Swagger):** https://barberflow-api-cko3.onrender.com/docs
+
+> Se aloja en el plan gratuito de Render, que **duerme el servicio tras un rato sin uso**: la primera petición puede tardar hasta un minuto en responder y las siguientes van con normalidad.
 
 ## Funcionalidades y reglas de negocio
 
@@ -34,37 +43,35 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
 - **Estados de cita:** `pendiente`, `confirmada`, `completada` y `cancelada`. Una cita cancelada libera su hueco. El cliente solo puede cancelar; el administrador puede cambiar a cualquier estado.
 - **Baja lógica:** un barbero o servicio con citas asociadas se da de baja (`activo = false`) en lugar de borrarse, conservando el historial, y se puede reactivar.
 - **Validación de datos** con Pydantic (nombres, duración entre 1 y 480 minutos, precio entre 0 y 1000).
-- **Migraciones de base de datos con Alembic:** el esquema está versionado y se actualiza solo al arrancar, también sobre bases de datos creadas antes de usar Alembic y sin perder datos.
+- **Migraciones con Alembic:** al arrancar, la API crea el esquema o lo actualiza hasta la última versión, también en bases de datos anteriores a Alembic, sin perder datos.
 - **Pruebas automáticas** con pytest (cobertura del 95 %) que se ejecutan en cada `push` mediante GitHub Actions.
 
 ## Tecnologías
 
 - Python 3, FastAPI y Uvicorn
-- SQLite y SQLAlchemy
-- Alembic para las migraciones de la base de datos
+- SQLAlchemy y Alembic (SQLite en local, PostgreSQL en producción)
 - Pydantic para esquemas y validación
 - JWT (python-jose) y bcrypt
 - pytest y GitHub Actions para las pruebas automáticas
+- Render (servidor) y Neon (PostgreSQL) para el despliegue
 
 ## Estructura
 
 ```
 ├── main.py            # Aplicación y routers
 ├── migraciones.py     # Prepara la base de datos con Alembic al arrancar
-├── database.py        # Conexión a SQLite
+├── database.py        # Conexión (SQLite o PostgreSQL según la URL)
 ├── models.py          # Modelos SQLAlchemy
 ├── schemas.py         # Esquemas Pydantic
 ├── security.py        # JWT, hashing y dependencias de autenticación y roles
 ├── crear_admin.py     # Script para crear o ascender administradores
 ├── alembic.ini        # Configuración de Alembic
-├── alembic/
-│   ├── env.py         # Entorno de Alembic (usa la base y los modelos del proyecto)
-│   └── versions/      # Una migración por cada cambio del esquema
+├── alembic/           # Entorno y versiones de las migraciones
 ├── requirements.txt
 ├── requirements-dev.txt   # dependencias de desarrollo y pruebas
 ├── pytest.ini
 ├── .github/workflows/tests.yml   # integración continua
-├── tests/             # pruebas de autenticación, catálogo, citas, administración y migraciones
+├── tests/             # pruebas de autenticación, catálogo, citas, administración y migración
 └── routers/
     ├── auth.py        # Login
     ├── clientes.py    # Registro
@@ -74,7 +81,7 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
     └── admin.py       # Vista detallada de citas
 ```
 
-## Instalación y ejecución
+## Instalación y ejecución en local
 
 1. **Clona el repositorio:**
 
@@ -99,7 +106,7 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
    pip install -r requirements.txt
    ```
 
-4. **Arranca el servidor** (al arrancar, Alembic crea o actualiza la base de datos):
+4. **Arranca el servidor** (crea `barberflow.db` y aplica las migraciones automáticamente):
 
    ```bash
    uvicorn main:app --reload
@@ -117,30 +124,24 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
 
 ### Configuración
 
-- La clave que firma los tokens se lee de la variable de entorno `BARBERFLOW_SECRET_KEY`. Si no existe, el servidor genera un archivo local `.secret_key` (excluido de Git) y lo reutiliza.
-- La base de datos es `barberflow.db` (SQLite, también excluida de Git). Se puede cambiar con la variable `BARBERFLOW_DATABASE_URL`.
+Todo se controla con variables de entorno:
 
-## Migraciones de base de datos
+| Variable | Para qué sirve | Si no existe |
+|---|---|---|
+| `BARBERFLOW_SECRET_KEY` | Clave que firma los tokens JWT | El servidor genera un archivo local `.secret_key` (excluido de Git) y lo reutiliza |
+| `BARBERFLOW_DATABASE_URL` | Base de datos (SQLite o PostgreSQL) | Usa `barberflow.db` (SQLite, excluida de Git) |
 
-El esquema se gestiona con [Alembic](https://alembic.sqlalchemy.org/). No hace falta ejecutar nada a mano para usar la API: al arrancar el servidor (o `crear_admin.py`) se aplican las migraciones pendientes. Una base de datos anterior a Alembic se reconoce y se actualiza sin perder datos.
+Con PostgreSQL basta con pasar la URL tal cual la entrega el proveedor (`postgresql://usuario:contraseña@host/base?sslmode=require`); la aplicación añade el driver por su cuenta.
 
-Cuando cambies `models.py`, genera la migración y revísala antes de subirla:
+## Despliegue
 
-```bash
-alembic revision --autogenerate -m "describe el cambio"
-alembic upgrade head      # aplicarla (también ocurre solo al arrancar)
-```
+La API corre en **Render** (plan gratuito) y guarda sus datos en **PostgreSQL en Neon** (plan gratuito), porque el disco de Render es efímero y un archivo SQLite se perdería en cada reinicio.
 
-Otros comandos útiles:
-
-```bash
-alembic current           # versión en la que está la base de datos
-alembic history           # lista de migraciones
-alembic downgrade -1      # deshace la última migración
-alembic check             # avisa si los modelos tienen cambios sin migración
-```
-
-Una prueba automática comprueba que las migraciones producen exactamente el esquema de `models.py`, así que olvidar una migración hace fallar la integración continua.
+- **Build Command:** `pip install -r requirements.txt`
+- **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
+- **Variables de entorno:** `BARBERFLOW_DATABASE_URL`, `BARBERFLOW_SECRET_KEY` y `PYTHON_VERSION`.
+- Las migraciones se aplican solas al arrancar, así que no hace falta un paso aparte.
+- Para crear el administrador en producción se ejecuta `crear_admin.py` desde un equipo local con `BARBERFLOW_DATABASE_URL` apuntando a la base de Neon.
 
 ## Pruebas
 
@@ -154,7 +155,7 @@ La suite (más de 80 pruebas, en pocos segundos) usa una **base de datos tempora
 - **Autenticación:** registro, login, tokens manipulados, caducados o firmados con otra clave, y acceso por rol.
 - **Catálogo:** permisos, validación de datos, baja lógica y reactivación.
 - **Citas:** horas libres, reservas, solapes, horario de apertura, días de cierre, fechas pasadas, estados y quién puede ver o modificar cada cita.
-- **Migraciones:** base nueva, base antigua sin perder datos, repetición sin error y coincidencia exacta con los modelos.
+- **Migración:** actualización de una base de datos antigua sin perder datos.
 - **Administración:** el script `crear_admin.py`, la única forma de crear administradores.
 
 Para ver qué porcentaje del código recorren las pruebas:
@@ -167,10 +168,12 @@ La cobertura actual ronda el **95 %**. Cada `push` y cada pull request ejecutan 
 
 ## Documentación interactiva
 
-Con el servidor en marcha:
+Con el servidor en marcha en local:
 
 - **Swagger UI:** http://127.0.0.1:8000/docs
 - **ReDoc:** http://127.0.0.1:8000/redoc
+
+En producción: https://barberflow-api-cko3.onrender.com/docs
 
 ## Endpoints
 
@@ -198,7 +201,6 @@ Con el servidor en marcha:
 ## Próximas mejoras
 
 - Paginación en los listados de citas.
-- Desplegar la API en un servicio en la nube.
 
 ## Autor
 
