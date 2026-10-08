@@ -1,6 +1,6 @@
 from datetime import datetime, date, time, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -15,6 +15,8 @@ HORA_CIERRE = 20
 PASO_MINUTOS = 30  # las franjas se ofrecen cada 30 minutos
 DURACION_POR_DEFECTO = 30  # por si el servicio de una cita antigua fue borrado
 DIAS_CERRADO = {6}  # días en los que la barbería no abre (lunes=0 ... domingo=6)
+LIMITE_POR_DEFECTO = 100  # citas que devuelve GET /citas/ si no se indica "limit"
+LIMITE_MAXIMO = 200  # tope de "limit" para que nadie pida la tabla entera de golpe
 
 
 # ---------------------------------------------------------
@@ -175,6 +177,8 @@ def obtener_citas(
     barbero_id: int | None = None,
     cliente_id: int | None = None,
     estado: str | None = None,
+    skip: int = Query(0, ge=0, description="Citas que se saltan al principio de la lista"),
+    limit: int = Query(LIMITE_POR_DEFECTO, ge=1, le=LIMITE_MAXIMO, description="Máximo de citas a devolver"),
     db: Session = Depends(get_db),
     usuario: Cliente = Depends(get_usuario_actual),
 ):
@@ -190,7 +194,8 @@ def obtener_citas(
         query = query.filter(Cita.cliente_id == cliente_id)
     if estado is not None:
         query = query.filter(Cita.estado == estado)
-    return query.order_by(Cita.fecha_hora).all()
+    # Se ordena también por id para que dos citas a la misma hora no cambien de página entre peticiones
+    return query.order_by(Cita.fecha_hora, Cita.id).offset(skip).limit(limit).all()
 
 
 @router.get("/{cita_id}", response_model=CitaResponse)

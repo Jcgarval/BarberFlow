@@ -169,6 +169,65 @@ def test_el_propietario_puede_borrar_su_cita(client, ana, reservar, dia_laborabl
     assert client.get(f"/citas/{cita['id']}", headers=ana["headers"]).status_code == 404
 
 
+# ============================================================ paginación
+def test_sin_parametros_se_devuelven_todas_las_citas_si_caben_en_el_limite(client, ana, reservar, dia_laborable):
+    for hora in (10, 11, 12):
+        reservar(ana, dia_laborable, hora)
+    assert len(client.get("/citas/", headers=ana["headers"]).json()) == 3
+
+
+def test_limit_y_skip_recorren_la_lista_por_paginas_sin_repetir_ni_perder_citas(client, ana, reservar, dia_laborable):
+    for hora in (10, 11, 12, 13, 14):
+        reservar(ana, dia_laborable, hora)
+    todas = [c["id"] for c in client.get("/citas/", headers=ana["headers"]).json()]
+    assert len(todas) == 5
+
+    def pagina(skip, limit):
+        respuesta = client.get("/citas/", params={"skip": skip, "limit": limit}, headers=ana["headers"])
+        assert respuesta.status_code == 200
+        return [c["id"] for c in respuesta.json()]
+
+    assert pagina(0, 2) == todas[0:2]
+    assert pagina(2, 2) == todas[2:4]
+    assert pagina(4, 2) == todas[4:]  # la última página es más corta
+    assert pagina(10, 2) == []  # pasarse del final no es un error: lista vacía
+
+
+def test_la_paginacion_respeta_el_orden_por_fecha(client, ana, reservar, dia_laborable):
+    # se crean desordenadas a propósito
+    for hora in (16, 10, 13):
+        reservar(ana, dia_laborable, hora)
+    primera = client.get("/citas/", params={"limit": 1}, headers=ana["headers"]).json()
+    assert primera[0]["fecha_hora"][11:16] == "10:00"
+    ultima = client.get("/citas/", params={"skip": 2, "limit": 1}, headers=ana["headers"]).json()
+    assert ultima[0]["fecha_hora"][11:16] == "16:00"
+
+
+def test_la_paginacion_se_combina_con_los_filtros_del_administrador(client, admin, ana, beto, reservar, dia_laborable):
+    for hora in (10, 11, 12):
+        reservar(ana, dia_laborable, hora)
+    reservar(beto, dia_laborable, 15)
+    respuesta = client.get("/citas/", params={"cliente_id": ana["id"], "limit": 2}, headers=admin["headers"]).json()
+    assert len(respuesta) == 2 and all(c["cliente_id"] == ana["id"] for c in respuesta)
+    resto = client.get("/citas/", params={"cliente_id": ana["id"], "skip": 2}, headers=admin["headers"]).json()
+    assert len(resto) == 1 and resto[0]["cliente_id"] == ana["id"]
+
+
+def test_la_paginacion_de_un_cliente_nunca_muestra_citas_de_otro(client, ana, beto, reservar, dia_laborable):
+    reservar(ana, dia_laborable, 10)
+    reservar(beto, dia_laborable, 12)
+    assert client.get("/citas/", params={"skip": 1}, headers=ana["headers"]).json() == []
+
+
+@pytest.mark.parametrize("parametros", [{"limit": 0}, {"limit": -1}, {"limit": 201}, {"skip": -1}])
+def test_valores_de_paginacion_invalidos_se_rechazan(client, ana, parametros):
+    assert client.get("/citas/", params=parametros, headers=ana["headers"]).status_code == 422
+
+
+def test_el_limite_maximo_se_acepta(client, ana):
+    assert client.get("/citas/", params={"limit": 200}, headers=ana["headers"]).status_code == 200
+
+
 # ============================================================ estados
 def cambiar(client, cita, estado, usuario):
     return client.patch(f"/citas/{cita['id']}/estado", json={"estado": estado}, headers=usuario["headers"])

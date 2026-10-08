@@ -32,7 +32,8 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
 - **Días de cierre:** los domingos no se puede reservar y no se ofrece ninguna franja (la regla vive en el servidor, no solo en la app).
 - **Estados de cita:** `pendiente`, `confirmada`, `completada` y `cancelada`. Una cita cancelada libera su hueco. El cliente solo puede cancelar; el administrador puede cambiar a cualquier estado.
 - **Baja lógica:** un barbero o servicio con citas asociadas se da de baja (`activo = false`) en lugar de borrarse, conservando el historial, y se puede reactivar.
-- **Validación de datos** con Pydantic (nombres, duración entre 1 y 480 minutos, precio entre 0 y 1000; contraseñas de 8 a 72 bytes con al menos una letra y un número).
+- **Paginación:** `GET /citas/` acepta `skip` y `limit` (por defecto 100 citas, máximo 200), ordenadas por fecha, y combina la paginación con los filtros.
+- **Validación de datos** con Pydantic (nombres, duración entre 1 y 480 minutos, precio entre 0 y 1000).
 - **Migración automática** de columnas nuevas al arrancar sobre una base de datos existente.
 - **Pruebas automáticas** con pytest (cobertura del 95 %) que se ejecutan en cada `push` mediante GitHub Actions.
 
@@ -63,7 +64,7 @@ Proyecto de portfolio personal para demostrar desarrollo backend con Python: arq
     ├── clientes.py    # Registro
     ├── barberos.py
     ├── servicios.py
-    ├── citas.py       # Disponibilidad, reservas y estados
+    ├── citas.py       # Disponibilidad, reservas, estados y paginación
     └── admin.py       # Vista detallada de citas
 ```
 
@@ -122,9 +123,9 @@ pytest
 
 La suite (más de 80 pruebas, en pocos segundos) usa una **base de datos temporal y su propia clave secreta**, así que no toca `barberflow.db` ni crea `.secret_key`. Cubre:
 
-- **Autenticación:** registro (con validación de nombre y contraseña), login, tokens manipulados, caducados o firmados con otra clave, y acceso por rol.
+- **Autenticación:** registro, login, tokens manipulados, caducados o firmados con otra clave, y acceso por rol.
 - **Catálogo:** permisos, validación de datos, baja lógica y reactivación.
-- **Citas:** horas libres, reservas, solapes, horario de apertura, días de cierre, fechas pasadas, estados y quién puede ver o modificar cada cita.
+- **Citas:** horas libres, reservas, solapes, horario de apertura, días de cierre, fechas pasadas, estados, paginación y quién puede ver o modificar cada cita.
 - **Migración:** actualización de una base de datos antigua sin perder datos.
 - **Administración:** el script `crear_admin.py`, la única forma de crear administradores.
 
@@ -161,7 +162,7 @@ Con el servidor en marcha:
 | POST | `/servicios/{id}/reactivar` | 🛡️ | Reactiva un servicio |
 | GET | `/citas/disponibilidad` | 🔑 | Horas libres (`barbero_id`, `servicio_id`, `fecha`) |
 | POST | `/citas/` | 🔑 | Reserva una cita (el cliente, solo a su nombre) |
-| GET | `/citas/` | 🔑 | Lista de citas (cliente: las suyas; admin: todas, con filtros) |
+| GET | `/citas/` | 🔑 | Lista de citas paginada con `skip` y `limit` (cliente: las suyas; admin: todas, con filtros) |
 | GET · PUT · DELETE | `/citas/{id}` | 🔑 | Consulta, modifica o elimina (propietario o admin) |
 | PATCH | `/citas/{id}/estado` | 🔑 | Cambia el estado (el cliente, solo cancelar) |
 | GET | `/admin/citas/detalles` | 🛡️ | Citas con nombres de cliente, barbero y servicio |
@@ -170,7 +171,6 @@ Con el servidor en marcha:
 
 - Migraciones de base de datos con Alembic.
 - Desplegar la API en un servicio en la nube.
-- Paginación en los listados de citas.
 
 ## Autor
 
