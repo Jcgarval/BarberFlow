@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Política de privacidad · BarberFlow</title>
+  <meta name="description" content="Política de privacidad de la aplicación BarberFlow: qué datos se guardan, para qué y cómo ejercer tus derechos.">
+  <style>
+    :root {
+      --fondo: #FAF7F2;
+      --texto: #1F1F23;
+      --suave: #5E5A50;
+      --linea: #CFC4AE;
+      --enlace: #7A5A10;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fondo: #141416;
+        --texto: #ECE8DF;
+        --suave: #B9B3A5;
+        --linea: #4A4A52;
+        --enlace: #E0B24A;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--fondo);
+      color: var(--texto);
+      font: 1.0625rem/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 42rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+    header img { width: 64px; height: 64px; flex: none; }
+    h1, h2 { font-family: Georgia, "Times New Roman", serif; line-height: 1.25; }
+    h1 { font-size: 1.75rem; margin: 0; }
+    h2 { font-size: 1.3rem; margin: 2.25rem 0 0.5rem; padding-top: 1.25rem; border-top: 1px solid var(--linea); }
+    p, ul { margin: 0.6rem 0; }
+    ul { padding-left: 1.25rem; }
+    li { margin: 0.3rem 0; }
+    a { color: var(--enlace); }
+    a:focus-visible { outline: 3px solid var(--enlace); outline-offset: 2px; }
+    .fecha { color: var(--suave); margin: 0; font-size: 0.95rem; }
+    footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--linea); color: var(--suave); font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <img src="logo.png" alt="Logo de BarberFlow" width="64" height="64">
+      <div>
+        <h1>Política de privacidad de BarberFlow</h1>
+        <p class="fecha">Última actualización: 9 de octubre de 2026</p>
+      </div>
+    </header>
+
+    <p>
+      BarberFlow es una aplicación para reservar citas en una barbería. Esta página explica qué datos
+      personales guarda la aplicación, para qué los usa y qué puedes hacer con ellos. Está escrita para
+      que se entienda: si algo no queda claro, escríbeme.
+    </p>
+
+    <h2>1. Quién es el responsable</h2>
+    <ul>
+      <li><strong>Responsable del tratamiento:</strong> José Carlos García Valdelvira</li>
+      <li><strong>Correo de contacto:</strong> <a href="mailto:jcgarciavaldelvira@gmail.com">jcgarciavaldelvira@gmail.com</a></li>
+    </ul>
+    <p>BarberFlow es un proyecto personal desarrollado y mantenido por una sola persona.</p>
+
+    <h2>2. Qué datos guarda la aplicación</h2>
+    <p>Solo guarda lo imprescindible para que puedas reservar y gestionar tus citas:</p>
+    <ul>
+      <li><strong>Datos de la cuenta:</strong> tu nombre, tu correo electrónico y tu contraseña. La contraseña no se guarda tal cual: se almacena cifrada (con bcrypt) y no puede leerse.</li>
+      <li><strong>Datos de tus citas:</strong> el barbero y el servicio elegidos, la fecha y la hora, y el estado de la cita (pendiente, confirmada, completada o cancelada).</li>
+      <li><strong>Datos técnicos de la sesión:</strong> un token de inicio de sesión que se guarda en tu móvil para que no tengas que escribir la contraseña cada vez. Caduca a las 24 horas.</li>
+    </ul>
+    <p>
+      La aplicación <strong>no</strong> pide ni usa tu ubicación, tus contactos, tus fotos ni ningún otro permiso del
+      móvil, salvo el acceso a internet. No incluye publicidad ni herramientas de analítica o seguimiento.
+    </p>
+
+    <h2>3. Para qué se usan los datos</h2>
+    <ul>
+      <li>Crear y mantener tu cuenta e identificarte cuando inicias sesión.</li>
+      <li>Calcular las horas libres, reservar tus citas y evitar que dos clientes ocupen el mismo hueco.</li>
+      <li>Permitir que la barbería vea y gestione las citas de sus clientes.</li>
+    </ul>
+    <p>
+      No se usan para publicidad, no se venden y no se ceden a terceros para sus propios fines.
+      La base legal es la ejecución del servicio que solicitas al crear tu cuenta y reservar una cita.
+    </p>
+
+    <h2>4. Dónde se guardan</h2>
+    <p>
+      La aplicación se comunica con un servidor alojado en <strong>Render</strong> y los datos se guardan en una base de datos
+      de <strong>Neon</strong>. Ambos son proveedores de infraestructura en la nube que actúan por encargo del responsable
+      y no usan tus datos para otros fines. Sus servidores pueden estar fuera de España o de la Unión Europea; en ese caso la
+      transferencia se apoya en las garantías que cada proveedor ofrece en su documentación de protección de datos.
+      Todas las comunicaciones entre la app y el servidor van cifradas (HTTPS).
+    </p>
+    <p>
+      Esos proveedores pueden registrar datos técnicos de funcionamiento (por ejemplo, la dirección IP y la hora de
+      cada petición) y conservar copias de seguridad durante un periodo limitado.
+    </p>
+
+    <h2>5. Cuánto tiempo se conservan</h2>
+    <p>
+      Tus datos se conservan mientras tengas la cuenta activa. Cuando la eliminas, tu nombre, tu correo y tu contraseña
+      se sustituyen por valores genéricos y dejan de poder asociarse contigo. El historial de citas se mantiene sin ningún dato que te identifique,
+      solo para que la agenda y las cuentas de la barbería sigan siendo coherentes. Las citas futuras
+      que tuvieras se cancelan.
+    </p>
+
+    <h2>6. Cómo eliminar tu cuenta</h2>
+    <p>
+      Puedes hacerlo tú mismo desde la aplicación: <strong>Perfil → Eliminar cuenta</strong>. Te pedirá tu contraseña para confirmar.
+      Si ya no tienes la aplicación o no recuerdas la contraseña, también puedes pedirlo por correo.
+      Las instrucciones están en <a href="eliminar-cuenta.html">esta página</a>.
+    </p>
+
+    <h2>7. Tus derechos</h2>
+    <p>Según el Reglamento General de Protección de Datos (RGPD) y la ley española, puedes:</p>
+    <ul>
+      <li>Acceder a los datos que se guardan sobre ti.</li>
+      <li>Rectificarlos si son incorrectos.</li>
+      <li>Suprimirlos (eliminar tu cuenta).</li>
+      <li>Oponerte al tratamiento o pedir que se limite.</li>
+      <li>Recibir tus datos en un formato que puedas reutilizar (portabilidad).</li>
+    </ul>
+    <p>
+      Para ejercer cualquiera de ellos escribe a
+      <a href="mailto:jcgarciavaldelvira@gmail.com">jcgarciavaldelvira@gmail.com</a>
+      desde el correo con el que te registraste. Responderé lo antes posible y, en cualquier caso, dentro del plazo legal de un mes.
+      Si crees que tus datos no se están tratando correctamente, también puedes presentar una reclamación ante la
+      <a href="https://www.aepd.es">Agencia Española de Protección de Datos</a>.
+    </p>
+
+    <h2>8. Menores</h2>
+    <p>
+      La aplicación no está dirigida a menores de 14 años. Si crees que un menor se ha registrado sin permiso de sus padres
+      o tutores, escríbeme y eliminaré la cuenta.
+    </p>
+
+    <h2>9. Cambios en esta política</h2>
+    <p>
+      Si la aplicación cambia de forma que afecte a tus datos (por ejemplo, al añadir recordatorios de cita con
+      notificaciones), actualizaré esta página e indicaré arriba la fecha de la última revisión.
+    </p>
+
+    <footer>
+      BarberFlow · José Carlos García Valdelvira ·
+      <a href="mailto:jcgarciavaldelvira@gmail.com">jcgarciavaldelvira@gmail.com</a>
+    </footer>
+  </main>
+</body>
+</html>

@@ -47,6 +47,10 @@ class ClienteResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class EliminarCuentaRequest(BaseModel):
+    password: str  # se pide la contraseña para confirmar el borrado
+
+
 # =========================================================
 #                 ESQUEMAS PARA SERVICIOS
 # =========================================================
