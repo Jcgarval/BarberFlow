@@ -22,3 +22,5 @@ email-validator>=2.0
 alembic>=1.13
 # Driver de PostgreSQL (producción en Neon); en local se sigue usando SQLite
 psycopg[binary]>=3.2
+# Cliente HTTP para enviar correos con la API de Brevo
+httpx>=0.27

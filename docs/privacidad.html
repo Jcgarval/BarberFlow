@@ -51,7 +51,7 @@
       <img src="logo.png" alt="Logo de BarberFlow" width="64" height="64">
       <div>
         <h1>Política de privacidad de BarberFlow</h1>
-        <p class="fecha">Última actualización: 9 de octubre de 2026</p>
+        <p class="fecha">Última actualización: 11 de octubre de 2026</p>
       </div>
     </header>
 
@@ -74,10 +74,12 @@
       <li><strong>Datos de la cuenta:</strong> tu nombre, tu correo electrónico y tu contraseña. La contraseña no se guarda tal cual: se almacena cifrada (con bcrypt) y no puede leerse.</li>
       <li><strong>Datos de tus citas:</strong> el barbero y el servicio elegidos, la fecha y la hora, y el estado de la cita (pendiente, confirmada, completada o cancelada).</li>
       <li><strong>Datos técnicos de la sesión:</strong> un token de inicio de sesión que se guarda en tu móvil para que no tengas que escribir la contraseña cada vez. Caduca a las 24 horas.</li>
+      <li><strong>Código de recuperación de contraseña:</strong> si usas la opción «¿Olvidaste tu contraseña?», se genera un código de 6 dígitos. En el servidor solo se guarda una versión cifrada del código, junto con la hora de caducidad y el número de intentos. El código caduca a los 15 minutos y se elimina poco después.</li>
     </ul>
     <p>
-      La aplicación <strong>no</strong> pide ni usa tu ubicación, tus contactos, tus fotos ni ningún otro permiso del
-      móvil, salvo el acceso a internet. No incluye publicidad ni herramientas de analítica o seguimiento.
+      La aplicación <strong>no</strong> pide ni usa tu ubicación, tus contactos ni tus fotos. Además del acceso a internet,
+      solo te pide el <strong>permiso de notificaciones</strong>, que es opcional y sirve para los recordatorios de cita
+      (ver el apartado 3). No incluye publicidad ni herramientas de analítica o seguimiento.
     </p>
 
     <h2>3. Para qué se usan los datos</h2>
@@ -85,29 +87,33 @@
       <li>Crear y mantener tu cuenta e identificarte cuando inicias sesión.</li>
       <li>Calcular las horas libres, reservar tus citas y evitar que dos clientes ocupen el mismo hueco.</li>
       <li>Permitir que la barbería vea y gestione las citas de sus clientes.</li>
+      <li>Enviarte por correo el código de 6 dígitos cuando pides recuperar tu contraseña. Es el único correo que envía la aplicación.</li>
+      <li>Avisarte con una notificación 24 horas y 1 hora antes de tu cita, si has dado permiso de notificaciones. Estos avisos se programan en tu propio móvil: no pasan por ningún servidor ni servicio externo. Puedes desactivarlos en los ajustes del móvil cuando quieras.</li>
     </ul>
     <p>
       No se usan para publicidad, no se venden y no se ceden a terceros para sus propios fines.
       La base legal es la ejecución del servicio que solicitas al crear tu cuenta y reservar una cita.
     </p>
 
-    <h2>4. Dónde se guardan</h2>
+    <h2>4. Dónde se guardan y quién interviene</h2>
     <p>
       La aplicación se comunica con un servidor alojado en <strong>Render</strong> y los datos se guardan en una base de datos
-      de <strong>Neon</strong>. Ambos son proveedores de infraestructura en la nube que actúan por encargo del responsable
-      y no usan tus datos para otros fines. Sus servidores pueden estar fuera de España o de la Unión Europea; en ese caso la
+      de <strong>Neon</strong>. Para enviar el correo con el código de recuperación se usa <strong>Brevo</strong>, un servicio de
+      envío de correo electrónico, al que se entrega únicamente tu dirección de correo y el texto del mensaje. Los tres son
+      proveedores que actúan por encargo del responsable y no usan tus datos para otros fines. Sus servidores pueden estar fuera de España o de la Unión Europea; en ese caso la
       transferencia se apoya en las garantías que cada proveedor ofrece en su documentación de protección de datos.
       Todas las comunicaciones entre la app y el servidor van cifradas (HTTPS).
     </p>
     <p>
       Esos proveedores pueden registrar datos técnicos de funcionamiento (por ejemplo, la dirección IP y la hora de
-      cada petición) y conservar copias de seguridad durante un periodo limitado.
+      cada petición) y conservar copias de seguridad o registros de envío durante un periodo limitado.
     </p>
 
     <h2>5. Cuánto tiempo se conservan</h2>
     <p>
       Tus datos se conservan mientras tengas la cuenta activa. Cuando la eliminas, tu nombre, tu correo y tu contraseña
-      se sustituyen por valores genéricos y dejan de poder asociarse contigo. El historial de citas se mantiene sin ningún dato que te identifique,
+      se sustituyen por valores genéricos y dejan de poder asociarse contigo, y se borra cualquier código de recuperación pendiente.
+      El historial de citas se mantiene sin ningún dato que te identifique,
       solo para que la agenda y las cuentas de la barbería sigan siendo coherentes. Las citas futuras
       que tuvieras se cancelan.
     </p>
@@ -115,8 +121,8 @@
     <h2>6. Cómo eliminar tu cuenta</h2>
     <p>
       Puedes hacerlo tú mismo desde la aplicación: <strong>Perfil → Eliminar cuenta</strong>. Te pedirá tu contraseña para confirmar.
-      Si ya no tienes la aplicación o no recuerdas la contraseña, también puedes pedirlo por correo.
-      Las instrucciones están en <a href="eliminar-cuenta.html">esta página</a>.
+      Si ya no tienes la aplicación o no recuerdas la contraseña, puedes recuperarla con la opción «¿Olvidaste tu contraseña?»
+      o pedir el borrado por correo. Las instrucciones están en <a href="eliminar-cuenta.html">esta página</a>.
     </p>
 
     <h2>7. Tus derechos</h2>
@@ -144,8 +150,8 @@
 
     <h2>9. Cambios en esta política</h2>
     <p>
-      Si la aplicación cambia de forma que afecte a tus datos (por ejemplo, al añadir recordatorios de cita con
-      notificaciones), actualizaré esta página e indicaré arriba la fecha de la última revisión.
+      Si la aplicación cambia de forma que afecte a tus datos, actualizaré esta página e indicaré arriba
+      la fecha de la última revisión.
     </p>
 
     <footer>

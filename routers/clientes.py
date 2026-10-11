@@ -4,7 +4,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Cita, Cliente
+from models import Cita, Cliente, CodigoRecuperacion
 from schemas import ClienteCreate, ClienteResponse, EliminarCuentaRequest
 from security import get_password_hash, get_usuario_actual, verify_password
 
@@ -63,6 +63,9 @@ def eliminar_mi_cuenta(
     )
     for cita in futuras:
         cita.estado = "cancelada"
+
+    # Los códigos de recuperación pendientes tampoco se conservan
+    db.query(CodigoRecuperacion).filter(CodigoRecuperacion.cliente_id == usuario.id).delete()
 
     usuario.nombre = "Cliente eliminado"
     # ".invalid" es un dominio reservado: nadie puede registrarlo ni iniciar sesión con él

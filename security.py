@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import os
 import secrets
 from pathlib import Path
@@ -48,6 +50,20 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+# ---------------------------------------------------------------- códigos de recuperación
+def generar_codigo_recuperacion() -> str:
+    """Código de 6 dígitos (con ceros a la izquierda si hace falta)."""
+    return f"{secrets.randbelow(1_000_000):06d}"
+
+def hash_codigo_recuperacion(cliente_id: int, codigo: str) -> str:
+    """HMAC-SHA256 con la clave secreta del servidor: si se filtra la base de datos,
+    los códigos no se pueden adivinar sin esa clave."""
+    mensaje = f"{cliente_id}:{codigo}".encode("utf-8")
+    return hmac.new(SECRET_KEY.encode("utf-8"), mensaje, hashlib.sha256).hexdigest()
+
+def verificar_codigo_recuperacion(cliente_id: int, codigo: str, hash_guardado: str) -> bool:
+    return hmac.compare_digest(hash_codigo_recuperacion(cliente_id, codigo), hash_guardado)
 
 def get_usuario_actual(credenciales: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     try:

@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, inspect, text
 from migraciones import preparar_base_de_datos
 from models import Base
 
-ULTIMA_REVISION = "0002"
+ULTIMA_REVISION = "0003"
 
 
 def _base_antigua(motor, con_columnas_nuevas=False):

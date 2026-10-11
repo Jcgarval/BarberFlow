@@ -52,3 +52,16 @@ class Cita(Base):
     cliente = relationship("Cliente", back_populates="citas")
     barbero = relationship("Barbero", back_populates="citas")
     servicio = relationship("Servicio", back_populates="citas")
+
+
+class CodigoRecuperacion(Base):
+    """Código de 6 dígitos para recuperar la contraseña. Solo se guarda su hash (HMAC), nunca el código."""
+    __tablename__ = "codigos_recuperacion"
+
+    id = Column(Integer, primary_key=True)
+    cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=False, index=True)
+    codigo_hash = Column(String, nullable=False)
+    creado_en = Column(DateTime, nullable=False)   # hora UTC (sin zona)
+    expira_en = Column(DateTime, nullable=False)   # hora UTC (sin zona)
+    intentos = Column(Integer, nullable=False, default=0)
+    usado = Column(Boolean, nullable=False, default=False)

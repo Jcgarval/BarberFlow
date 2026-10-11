@@ -22,6 +22,16 @@ class BarberoResponse(BaseModel):
 # =========================================================
 #                 ESQUEMAS PARA CLIENTES
 # =========================================================
+def _validar_password(valor: str) -> str:
+    """Reglas de contraseña compartidas por el registro y la recuperación."""
+    if len(valor) < 8:
+        raise ValueError("La contraseña debe tener al menos 8 caracteres")
+    if len(valor.encode("utf-8")) > 72:  # límite de bcrypt
+        raise ValueError("La contraseña es demasiado larga (máximo 72 bytes)")
+    if not any(c.isalpha() for c in valor) or not any(c.isdigit() for c in valor):
+        raise ValueError("La contraseña debe incluir al menos una letra y un número")
+    return valor
+
 class ClienteCreate(BaseModel):
     nombre: NombreCorto          # sin espacios sobrantes, de 1 a 60 caracteres
     email: EmailStr
@@ -30,13 +40,7 @@ class ClienteCreate(BaseModel):
     @field_validator("password")
     @classmethod
     def validar_password(cls, valor: str) -> str:
-        if len(valor) < 8:
-            raise ValueError("La contraseña debe tener al menos 8 caracteres")
-        if len(valor.encode("utf-8")) > 72:  # límite de bcrypt
-            raise ValueError("La contraseña es demasiado larga (máximo 72 bytes)")
-        if not any(c.isalpha() for c in valor) or not any(c.isdigit() for c in valor):
-            raise ValueError("La contraseña debe incluir al menos una letra y un número")
-        return valor
+        return _validar_password(valor)
 
 class ClienteResponse(BaseModel):
     id: int
@@ -102,6 +106,22 @@ class CitaResponse(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+# =========================================================
+#            ESQUEMAS: RECUPERAR CONTRASEÑA
+# =========================================================
+class SolicitudRecuperacion(BaseModel):
+    email: EmailStr
+
+class RestablecerPasswordRequest(BaseModel):
+    email: EmailStr
+    codigo: str = Field(pattern=r"^\d{6}$")   # exactamente 6 dígitos
+    nueva_password: str
+
+    @field_validator("nueva_password")
+    @classmethod
+    def validar_nueva_password(cls, valor: str) -> str:
+        return _validar_password(valor)
 
 # =========================================================
 #            ESQUEMAS: ESTADOS Y DISPONIBILIDAD
